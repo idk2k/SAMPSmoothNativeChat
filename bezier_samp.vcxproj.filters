@@ -1,0 +1,117 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="imgui">
+      <UniqueIdentifier>{03f11582-51cc-46dc-b85c-9badb70ed0a8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dxut">
+      <UniqueIdentifier>{52b51fdc-f0c4-488d-ba0b-17ccdcbd06dc}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\dllmain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ConsoleManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\EasingsHolder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UtilityHelper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="third-party\imgui\imgui.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="third-party\imgui\imgui_draw.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="third-party\imgui\imgui_impl_dx9.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="third-party\imgui\imgui_impl_win32.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="third-party\imgui\imgui_tables.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="third-party\imgui\imgui_widgets.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dxut\dxstdafx.cpp">
+      <Filter>dxut</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dxut\DXUT.cpp">
+      <Filter>dxut</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dxut\DXUTenum.cpp">
+      <Filter>dxut</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dxut\DXUTgui.cpp">
+      <Filter>dxut</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dxut\DXUTMesh.cpp">
+      <Filter>dxut</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dxut\DXUTmisc.cpp">
+      <Filter>dxut</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dxut\DXUTSettingsDlg.cpp">
+      <Filter>dxut</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dxut\DXUTsound.cpp">
+      <Filter>dxut</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Structures.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ConsoleManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\EasingsHolder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\UtilityHelper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\dxut\dxstdafx.h">
+      <Filter>dxut</Filter>
+    </ClInclude>
+    <ClInclude Include="src\dxut\DXUT.h">
+      <Filter>dxut</Filter>
+    </ClInclude>
+    <ClInclude Include="src\dxut\DXUTenum.h">
+      <Filter>dxut</Filter>
+    </ClInclude>
+    <ClInclude Include="src\dxut\DXUTgui.h">
+      <Filter>dxut</Filter>
+    </ClInclude>
+    <ClInclude Include="src\dxut\DXUTMesh.h">
+      <Filter>dxut</Filter>
+    </ClInclude>
+    <ClInclude Include="src\dxut\DXUTmisc.h">
+      <Filter>dxut</Filter>
+    </ClInclude>
+    <ClInclude Include="src\dxut\DXUTSettingsDlg.h">
+      <Filter>dxut</Filter>
+    </ClInclude>
+    <ClInclude Include="src\dxut\DXUTsound.h">
+      <Filter>dxut</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

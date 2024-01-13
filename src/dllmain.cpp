@@ -1,9 +1,11 @@
 #define _CRT_SECURE_NO_WARNINGS
 #define BUILD_WINDOWS
+#define NOMINMAX
 #include <Windows.h>
 #include <intrin.h>
 #include <tchar.h>
 
+#include <algorithm>
 #include <cstdint>
 #include <iostream>
 
@@ -184,6 +186,7 @@ auto __fastcall ScrollHooked(void* reg_ecx, void* reg_edx, int nDelta) -> void {
         global_params.ScrollToTop = false;
     }
     scroll_for_reach += 1;
+    // Minimum, and good delay for scrolling delta of time.
     delayForScroll = (ULONGLONG)10;
 }
 
@@ -191,24 +194,30 @@ using RecalcFontSize_t = void(__fastcall*)(void*, void*);
 RecalcFontSize_t fpRecalcFontSize{};
 auto __fastcall RecalcFontSizeHooked(void* reg_ecx, void* reg_edx) -> void { fpRecalcFontSize(reg_ecx, reg_edx); }
 
+DWORD& get_min_scrollbar_position_index() { return *(DWORD*)((char*)(*(void**)(addresses.g_chat + 0x11E)) + 150); }
+
 using AddEntry_t = void(__fastcall*)(void*, void*, int, const char*, const char*, structures::D3DCOLOR,
                                      structures::D3DCOLOR);
 AddEntry_t fpAddEntry{};
 auto __fastcall AddEntryHooked(void* reg_ecx, void* reg_edx, int nType, const char* szText, const char* szPrefix,
                                structures::D3DCOLOR textColor, structures::D3DCOLOR prefixColor) -> void {
     global_params.bNewEntryAdded = true;
+
+    // This is counter of new added messages. Purpose of it - just save real minimum index.
+    // This min value uses for scrollbar size on left side from chat lines.
+    //
+    // Start value is 101-8, just coz AddEntry hooked at RakNetConnect, and 7 messages added before it (samp connect
+    // msgs, CLEO plugin).
+    static int start_min = 101 - 8;
+    if (!addresses.g_chat) {
+        utils::protect_safe_memory_copy(&addresses.g_chat, (void*)(addresses.samp_base + 0x21A0E4), 0x4);
+    }
+    start_min -= 1;
+    // Min value is page size. [TODO]: get page size directly from memory (remove hard-code value).
+    get_min_scrollbar_position_index() = start_min >= 1 ? std::min(0x57, start_min) : 1;
+
     fpAddEntry(reg_ecx, reg_edx, nType, szText, szPrefix, textColor, prefixColor);
 }
-
-struct ChatEntry {
-    int m_timestamp;
-    char m_szPrefix[28];
-    char m_szText[144];
-    char unused[64];
-    int m_nType;
-    D3DCOLOR m_textColor;
-    D3DCOLOR m_prefixColor;
-};
 
 // ===========
 bool scroll_process = false;
@@ -292,6 +301,13 @@ auto __fastcall RenderEntryHooked(void* reg_ecx, void* reg_edx, const char* szTe
                     scroll_for_reach = 0;
                 }
             }
+            if (global_params.ScrollToTop) {
+                // This is check for min scroll position, which can change if new message added.
+                if (get_scrollbar_pointer_pos() == get_min_scrollbar_position_index()) {
+                    scroll_process = false;
+                    scroll_for_reach = 0;
+                }
+            }
         }
     }
     if (scroll_increments > 20) {
@@ -354,6 +370,10 @@ auto __fastcall RakPeerConnectHooked(void* reg_ecx, void* reg_edx, const char* h
         if (!addresses.g_chat) {
             utils::protect_safe_memory_copy(&addresses.g_chat, (void*)(addresses.samp_base + 0x21A0E4), 0x4);
         }
+
+        // Start value of min index, used for scrollbar size on left side from chat lines.
+        get_min_scrollbar_position_index() = 0x57;
+
         InstallD3DHook();
 
         utils::protect_safe_memory_set((void*)(addresses.samp_base + 0x6441C + 6U), 1, 1);

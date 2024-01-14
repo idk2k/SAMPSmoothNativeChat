@@ -22,6 +22,22 @@
 #include "imgui/imgui_impl_win32.h"
 #pragma execution_character_set("utf-8")
 
+/*
+    NEW FEATURE VARS
+*/
+
+int feature_scroll_delta = 0;
+int feature_scroll_increments = 0;
+ULONGLONG feature_prevTimeScroll = 0;
+ULONGLONG feature_delayForScroll = 10;
+ULONGLONG feature_startTimer = 0;
+bool feature_scroll_start = false;
+bool feature_scroll_process = false;
+bool feature_force_return_flag = false;
+bool feature_temp_holder = false;
+
+// =========================
+
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 #pragma intrinsic(_ReturnAddress)
@@ -236,6 +252,9 @@ auto __fastcall Render(void* reg_ecx, void* reg_edx) -> void {
     if (force_return_flag) {
         force_return_flag = false;
     }
+    if (feature_force_return_flag) {
+        feature_force_return_flag = false;
+    }
     fpRender(reg_ecx, reg_edx);
     if (global_params.running) {
         if (!prevTimeAddMessage) prevTimeAddMessage = GetTickCount64();
@@ -259,6 +278,21 @@ auto __fastcall Render(void* reg_ecx, void* reg_edx) -> void {
             }();
         }
     }
+    if (feature_scroll_process) {
+        if (!feature_prevTimeScroll) feature_prevTimeScroll = GetTickCount64();
+        if (GetTickCount64() - feature_prevTimeScroll >= feature_delayForScroll) {
+            feature_prevTimeScroll = GetTickCount64();
+            // Some calculations for smooth scroll, depending on number of scroll_for_reach. Its parabola
+            // if scroll_for_reach < 3, and just line if >=3;
+            feature_scroll_increments += [&]() -> int {
+                if (feature_scroll_delta >= 3 || feature_scroll_delta <= -3) {
+                    return 21;
+                } else {
+                    return (53 / 24) * feature_scroll_delta * feature_scroll_delta + 1;
+                }
+            }();
+        }
+    }
 }
 
 void move_scrollbar_pointer(int offset) {
@@ -268,11 +302,63 @@ void move_scrollbar_pointer(int offset) {
 
 DWORD get_scrollbar_pointer_pos() { return *(DWORD*)((char*)(*(void**)(addresses.g_chat + 0x11E)) + 142); }
 
+void ScrollViaThumbHandling(structures::CRect& rect) {
+    if (feature_scroll_delta) {
+        if (!feature_scroll_process) {
+            feature_scroll_process = true;
+            feature_scroll_increments = 0;
+            if (feature_scroll_delta > 0)
+                feature_scroll_delta -= 1;
+            else
+                feature_scroll_delta += 1;
+            feature_startTimer = GetTickCount64();
+            if (feature_scroll_delta > 0) {
+                feature_force_return_flag = true;
+                feature_temp_holder = true;
+                if (get_scrollbar_pointer_pos() == 87) {
+                    feature_scroll_process = false;
+                    feature_scroll_delta = 0;
+                }
+            }
+            if (feature_scroll_delta < 0) {
+                // This is check for min scroll position, which can change if new message added.
+                if (get_scrollbar_pointer_pos() == get_min_scrollbar_position_index()) {
+                    feature_scroll_process = false;
+                    feature_scroll_delta = 0;
+                }
+            }
+        }
+    }
+    if (feature_scroll_increments > 20) {
+        feature_scroll_process = false;
+        feature_scroll_increments = 0;
+        if (feature_scroll_delta < 0) {
+            move_scrollbar_pointer(-1);
+            feature_force_return_flag = true;
+        }
+    }
+    if (feature_scroll_delta < 0) {
+        if (feature_force_return_flag) rect.top += 20;
+    }
+    if (feature_scroll_process) {
+        if (feature_scroll_delta < 0) rect.top += (long)(feature_scroll_increments);
+        if (feature_scroll_delta > 0) {
+            if (feature_temp_holder) {
+                move_scrollbar_pointer(1);
+                feature_temp_holder = false;
+            }
+            if (!feature_force_return_flag) {
+                rect.top -= (long)(feature_scroll_increments)-20;
+            }
+        }
+    }
+}
+
 using RenderEntry_t = void(__fastcall*)(void*, void*, const char*, structures::CRect, structures::D3DCOLOR);
 RenderEntry_t fpRenderEntry{};
 auto __fastcall RenderEntryHooked(void* reg_ecx, void* reg_edx, const char* szText, structures::CRect rect,
                                   structures::D3DCOLOR color) -> void {
-    // 'New Message Added' Behavior Managing
+    // 'New Message Added' Behavior Handling
     if (global_params.bNewEntryAdded) {
         global_params.bNewEntryAdded = false;
         if (!global_params.running) {
@@ -286,7 +372,7 @@ auto __fastcall RenderEntryHooked(void* reg_ecx, void* reg_edx, const char* szTe
     if (global_params.running) {
         rect.top += 20 - (long)(global_params.increments);
     }
-    // 'Scroll by Mouse' Behavior Managing
+    // 'Scroll by Mouse' Behavior Handling
     if (scroll_for_reach) {
         if (!scroll_process) {
             scroll_process = true;
@@ -333,6 +419,9 @@ auto __fastcall RenderEntryHooked(void* reg_ecx, void* reg_edx, const char* szTe
             }
         }
     }
+    // 'Scroll by Mouse with moving Thumb on Track' Behavior Handling
+    ScrollViaThumbHandling(rect);
+
     fpRenderEntry(reg_ecx, reg_edx, szText, rect, color);
 }
 
@@ -358,6 +447,23 @@ LRESULT __stdcall WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPar
         }
     }
     return CallWindowProcA(m_pWindowProc, hWnd, msg, wParam, lParam);
+}
+
+void print_value(int val) { std::cout << val << std::endl; }
+
+DWORD JMP_LABEL_SCROLL_MOUSE_HANDLE_BREAK{};
+void __declspec(naked) ScrollViaMouseThunkHook() {
+    static int value_oo{0};
+    __asm pushad;
+    __asm nop;
+    __asm mov value_oo, eax;
+    feature_scroll_delta = value_oo - *(DWORD*)((char*)(*(void**)(addresses.g_chat + 0x11E)) + 142);
+    // print_value(feature_scroll_delta);
+    if (feature_scroll_delta) {
+        feature_scroll_start = true;
+    }
+    __asm popad;
+    __asm jmp JMP_LABEL_SCROLL_MOUSE_HANDLE_BREAK;
 }
 
 using RakPeer_Connect = bool(__fastcall*)(void*, void*, const char*, unsigned short, char*, int);
@@ -390,6 +496,11 @@ auto __fastcall RakPeerConnectHooked(void* reg_ecx, void* reg_edx, const char* h
 
         utils::MH_CreateAndEnableHook(static_cast<std::uintptr_t>(addresses.samp_base + 0x63D70), &Render,
                                       reinterpret_cast<LPVOID*>(&fpRender));
+
+        JMP_LABEL_SCROLL_MOUSE_HANDLE_BREAK = addresses.samp_base + 0x8440F;
+
+        utils::MH_CreateAndEnableHook(static_cast<std::uintptr_t>(addresses.samp_base + 0x84409),
+                                      &ScrollViaMouseThunkHook, nullptr);
 
         initialize = true;
     }

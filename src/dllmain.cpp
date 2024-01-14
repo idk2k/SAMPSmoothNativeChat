@@ -260,7 +260,7 @@ auto __fastcall Render(void* reg_ecx, void* reg_edx) -> void {
         if (!prevTimeAddMessage) prevTimeAddMessage = GetTickCount64();
         if (GetTickCount64() - prevTimeAddMessage >= delay) {
             prevTimeAddMessage = GetTickCount64();
-            global_params.increments += 1;
+            global_params.increments += 2;
         }
     }
     if (scroll_process) {
@@ -333,7 +333,12 @@ void ScrollViaThumbHandling(structures::CRect& rect) {
         feature_scroll_process = false;
         feature_scroll_increments = 0;
         if (feature_scroll_delta < 0) {
-            move_scrollbar_pointer(-1);
+            if (feature_scroll_delta <= 4) {
+                move_scrollbar_pointer(-3);
+            }
+            else {
+                move_scrollbar_pointer(-1);
+            }
             feature_force_return_flag = true;
         }
     }
@@ -344,7 +349,12 @@ void ScrollViaThumbHandling(structures::CRect& rect) {
         if (feature_scroll_delta < 0) rect.top += (long)(feature_scroll_increments);
         if (feature_scroll_delta > 0) {
             if (feature_temp_holder) {
-                move_scrollbar_pointer(1);
+                if (feature_scroll_delta >= 4) {
+                    move_scrollbar_pointer(3);
+                }
+                else {
+                    move_scrollbar_pointer(1);
+                }
                 feature_temp_holder = false;
             }
             if (!feature_force_return_flag) {
@@ -377,7 +387,12 @@ auto __fastcall RenderEntryHooked(void* reg_ecx, void* reg_edx, const char* szTe
         if (!scroll_process) {
             scroll_process = true;
             scroll_increments = 0;
-            scroll_for_reach -= 1;
+            if (scroll_for_reach >= 4) {
+                scroll_for_reach -= 2;
+            }
+            else {
+                scroll_for_reach -= 1;
+            }
             startTimer = GetTickCount64();
             if (global_params.ScrollToBottom) {
                 force_return_flag = true;
@@ -400,7 +415,14 @@ auto __fastcall RenderEntryHooked(void* reg_ecx, void* reg_edx, const char* szTe
         scroll_process = false;
         scroll_increments = 0;
         if (global_params.ScrollToTop) {
-            move_scrollbar_pointer(-1);
+            // Pass some chat line, skip 2 lines without rendering them.
+            if (scroll_for_reach >= 4) {
+                std::cout << "[DBG]: enter, top\n";
+                move_scrollbar_pointer(-3);
+            }
+            else {
+                move_scrollbar_pointer(-1);
+            }
             force_return_flag = true;
         }
     }
@@ -411,7 +433,14 @@ auto __fastcall RenderEntryHooked(void* reg_ecx, void* reg_edx, const char* szTe
         if (global_params.ScrollToTop) rect.top += (long)(scroll_increments);
         if (global_params.ScrollToBottom) {
             if (temp_holder) {
-                move_scrollbar_pointer(1);
+                // Pass some chat line, skip 2 lines without rendering them.
+                if (scroll_for_reach >= 3) {
+                    std::cout << "[DBG]: enter, bottom\n";
+                    move_scrollbar_pointer(3);
+                }
+                else {
+                    move_scrollbar_pointer(1);
+                }
                 temp_holder = false;
             }
             if (!force_return_flag) {
@@ -458,7 +487,6 @@ void __declspec(naked) ScrollViaMouseThunkHook() {
     __asm nop;
     __asm mov value_oo, eax;
     feature_scroll_delta = value_oo - *(DWORD*)((char*)(*(void**)(addresses.g_chat + 0x11E)) + 142);
-    // print_value(feature_scroll_delta);
     if (feature_scroll_delta) {
         feature_scroll_start = true;
     }

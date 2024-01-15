@@ -480,7 +480,7 @@ LRESULT __stdcall WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPar
     return CallWindowProcA(m_pWindowProc, hWnd, msg, wParam, lParam);
 }
 
-void print_value(int val) { std::cout << val << std::endl; }
+void print_value(int val, int val_2) { std::cout << val << " -- " << val_2 << std::endl; }
 
 DWORD saved_top{};
 DWORD saved_bottom{};
@@ -493,10 +493,15 @@ void __declspec(naked) ScrollViaMouseThunkHook() {
     __asm mov value_oo, eax;
     feature_scroll_delta = value_oo - *(DWORD*)((char*)(*(void**)(addresses.g_chat + 0x11E)) + 142);
     // FOR DEBUG
-    print_value(feature_scroll_delta);
-    if (feature_scroll_delta) {
-        feature_scroll_start = true;
-    }
+    // !!!!!!!!! ALWAYS 1 WHY????
+    print_value(value_oo, *(DWORD*)((char*)(*(void**)(addresses.g_chat + 0x11E)) + 142));
+    //if (feature_scroll_delta) {
+    //    feature_scroll_start = true;
+    //}
+    __asm mov eax, saved_bottom;
+    __asm mov [esi + 0x8A], eax;
+    __asm mov eax, saved_top;
+    __asm mov [esi + 0x82], eax;
     __asm popad;
     __asm jmp JMP_LABEL_SCROLL_MOUSE_HANDLE_BREAK;
 }
@@ -505,8 +510,12 @@ DWORD JMP_TEST_PATCH{};
 void __declspec(naked) TestPatch() {
     __asm pushad;
 
-    __asm mov saved_top, edi;
-    __asm mov saved_bottom, ebx;
+    __asm mov eax, [esi + 0x8A];
+    __asm mov saved_bottom, eax;
+    __asm mov eax, [esi + 0x82];
+    __asm mov saved_top, eax;
+    __asm mov [esi+0x8A], ebx;
+    __asm mov [esi+0x82], edi;
 
     __asm popad;
     __asm jmp JMP_TEST_PATCH;
@@ -540,6 +549,16 @@ void __declspec(naked) TestPatch_3() {
 
     __asm popad;
     __asm jmp JMP_TEST_PATCH_3;
+}
+
+DWORD JMP_TEST_PATCH_4{};
+void __declspec(naked) TestPatch_4() {
+    __asm pushad;
+
+    __asm mov ecx, saved_bottom;
+
+    __asm popad;
+    __asm jmp JMP_TEST_PATCH_4;
 }
 
 using RakPeer_Connect = bool(__fastcall*)(void*, void*, const char*, unsigned short, char*, int);
@@ -584,16 +603,19 @@ auto __fastcall RakPeerConnectHooked(void* reg_ecx, void* reg_edx, const char* h
         JMP_TEST_PATCH_1 = addresses.samp_base + 0x843CF;
         utils::MH_CreateAndEnableHook(static_cast<std::uintptr_t>(addresses.samp_base + 0x843C9), &TestPatch_1, nullptr);
 
-        JMP_TEST_PATCH_2 = addresses.samp_base + 0x843E3;
-        utils::MH_CreateAndEnableHook(static_cast<std::uintptr_t>(addresses.samp_base + 0x843DD), &TestPatch_2, nullptr);
+        //JMP_TEST_PATCH_2 = addresses.samp_base + 0x843E3;
+        //utils::MH_CreateAndEnableHook(static_cast<std::uintptr_t>(addresses.samp_base + 0x843DD), &TestPatch_2, nullptr);
 
-        JMP_TEST_PATCH_3 = addresses.samp_base + 0x843FC;
-        utils::MH_CreateAndEnableHook(static_cast<std::uintptr_t>(addresses.samp_base + 0x843F6), &TestPatch_3, nullptr);
+        //JMP_TEST_PATCH_3 = addresses.samp_base + 0x843FC;
+        //utils::MH_CreateAndEnableHook(static_cast<std::uintptr_t>(addresses.samp_base + 0x843F6), &TestPatch_3, nullptr);
 
-        DWORD diff_addr = 0x84394 - 0x84388;
-        utils::protect_safe_memory_set(reinterpret_cast<void*>(addresses.samp_base + 0x84388), 0x90, diff_addr);
+        //JMP_TEST_PATCH_4 = addresses.samp_base + 0x843A7;
+        //utils::MH_CreateAndEnableHook(static_cast<std::uintptr_t>(addresses.samp_base + 0x843A1), &TestPatch_4, nullptr);
 
-        /*utils::protect_safe_memory_set(reinterpret_cast<void*>(addresses.samp_base + 0x843B7), 0x90, 5);*/
+        /*DWORD diff_addr = 0x84394 - 0x84388;
+        utils::protect_safe_memory_set(reinterpret_cast<void*>(addresses.samp_base + 0x84388), 0x90, diff_addr);*/
+
+        utils::protect_safe_memory_set(reinterpret_cast<void*>(addresses.samp_base + 0x843B7), 0x90, 5);
 
         initialize = true;
     }

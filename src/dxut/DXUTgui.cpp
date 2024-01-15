@@ -3937,7 +3937,7 @@ bool CDXUTScrollBar::HandleMouse( UINT uMsg, POINT pt, WPARAM wParam, LPARAM lPa
                               ( m_rcThumb.top - m_rcTrack.top +
                                 nMaxThumb / ( nMaxFirstItem * 2 ) ) * // Shift by half a row to avoid last row covered by only one pixel
                               nMaxFirstItem  / nMaxThumb;
-
+                
                 return true;
             }
 

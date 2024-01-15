@@ -106,6 +106,9 @@
       <AdditionalDependencies>MinHook.x86.lib;d3d9.lib;d3dx9.lib;dsound.lib;dxguid.lib;Winmm.lib;Comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(DXSDK_DIR)\Lib\x86\;G:\Projects\C++ Test Projects\Testing All Things [for all]\bezier_samp;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <PostBuildEvent>
+      <Command>copy "$(TargetPath)" "G:\GTA San Andreas - SAMP\"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>

@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SAMP Chat — Custom Scroll + Tuning</title>
+<style>
+  :root {
+    --chat-bg: rgba(0, 0, 0, 0.62);
+    --chat-border: rgba(255, 255, 255, 0.14);
+    --text-main: #e8e8e8;
+    --text-dim: #a8a8a8;
+    --accent: #7ec8ff;
+    --green: #8ce68c;
+    --yellow: #ffe082;
+    --red: #ff8a80;
+    --purple: #d1a3ff;
+    --row-height: 26px;
+    --visible-rows: 6;
+    --scrollbar-width: 8px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    min-height: 100%;
+    background:
+      radial-gradient(circle at 20% 20%, #1d2b3a 0%, #0b1016 55%, #05070a 100%);
+    color: var(--text-main);
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    overflow-x: hidden;
+  }
+
+  body {
+    display: grid;
+    place-items: center;
+    padding: 24px;
+  }
+
+  .game-frame {
+    width: min(980px, 100%);
+    display: grid;
+    gap: 18px;
+  }
+
+  .hud {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+  }
+
+  .server { font-weight: 700; color: #fff; }
+
+  .chat-shell {
+    position: relative;
+    width: 100%;
+    max-width: 760px;
+    border: 1px solid var(--chat-border);
+    border-radius: 4px;
+    background: var(--chat-bg);
+    box-shadow:
+      0 18px 45px rgba(0, 0, 0, 0.55),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(5px);
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: var(--scrollbar-width) 1fr;
+  }
+
+  /* Левый кастомный скроллбар */
+  .scrollbar {
+    position: relative;
+    background: rgba(255,255,255,0.05);
+    border-right: 1px solid rgba(255,255,255,0.07);
+    cursor: pointer;
+    touch-action: none;
+  }
+
+  .scrollbar-thumb {
+    position: absolute;
+    left: 2px;
+    right: 2px;
+    min-height: 24px;
+    border-radius: 4px;
+    background: rgba(126, 200, 255, 0.55);
+    box-shadow: 0 0 8px rgba(126, 200, 255, 0.25);
+    transition: background 140ms ease;
+  }
+
+  .scrollbar:hover .scrollbar-thumb,
+  .scrollbar.dragging .scrollbar-thumb {
+    background: rgba(126, 200, 255, 0.85);
+  }
+
+  .scrollbar.disabled {
+    cursor: default;
+  }
+
+  .scrollbar.disabled .scrollbar-thumb {
+    background: rgba(255,255,255,0.14);
+    box-shadow: none;
+  }
+
+  .chat-viewport {
+    position: relative;
+    height: calc(var(--row-height) * var(--visible-rows));
+    overflow: hidden;
+    touch-action: none;
+    user-select: none;
+    cursor: default;
+  }
+
+  .chat-track {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    will-change: transform;
+    transform: translate3d(0, 0, 0);
+  }
+
+  .chat-row {
+    height: var(--row-height);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 12px;
+    font-size: 13px;
+    line-height: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.035);
+  }
+
+  .time {
+    flex: 0 0 auto;
+    min-width: 48px;
+    color: #7f8b96;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 11px;
+  }
+
+  .nick { font-weight: 700; }
+
+  .message {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .c-white { color: #e8e8e8; }
+  .c-green { color: var(--green); }
+  .c-blue { color: var(--accent); }
+  .c-yellow { color: var(--yellow); }
+  .c-red { color: var(--red); }
+  .c-purple { color: var(--purple); }
+
+  .chat-edge {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 14px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 180ms ease;
+  }
+
+  .chat-edge.top {
+    top: 0;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.75), transparent);
+  }
+
+  .chat-edge.bottom {
+    bottom: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.75), transparent);
+  }
+
+  .chat-shell.can-scroll-up .chat-edge.top,
+  .chat-shell.can-scroll-down .chat-edge.bottom { opacity: 1; }
+
+  .controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 14px;
+    border: 1px solid var(--chat-border);
+    border-radius: 6px;
+    background: rgba(0,0,0,0.48);
+    padding: 16px;
+  }
+
+  .controls-title {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #fff;
+  }
+
+  .presets {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .preset-btn {
+    border: 1px solid rgba(255,255,255,0.16);
+    border-radius: 4px;
+    background: rgba(255,255,255,0.06);
+    color: #fff;
+    font: inherit;
+    font-size: 12px;
+    padding: 6px 11px;
+    cursor: pointer;
+    transition: background 140ms ease, transform 140ms ease;
+  }
+
+  .preset-btn:hover { background: rgba(255,255,255,0.13); }
+  .preset-btn:active { transform: translateY(1px); }
+  .preset-btn.active {
+    background: rgba(126,200,255,0.22);
+    border-color: rgba(126,200,255,0.55);
+  }
+
+  .slider-group {
+    display: grid;
+    gap: 7px;
+  }
+
+  .slider-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  .slider-value {
+    color: var(--accent);
+    font-family: Consolas, monospace;
+  }
+
+  input[type="range"] {
+    width: 100%;
+    height: 22px;
+    appearance: none;
+    -webkit-appearance: none;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  input[type="range"]::-webkit-slider-runnable-track {
+    height: 5px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.13);
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 15px;
+    height: 15px;
+    margin-top: -5px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid #0b1016;
+    box-shadow: 0 0 8px rgba(126,200,255,0.45);
+  }
+
+  input[type="range"]::-moz-range-track {
+    height: 5px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.13);
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid #0b1016;
+    box-shadow: 0 0 8px rgba(126,200,255,0.45);
+  }
+
+  .input-line {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid var(--chat-border);
+    border-radius: 4px;
+    background: rgba(0,0,0,0.5);
+    padding: 10px 12px;
+  }
+
+  .prompt { color: var(--green); font-weight: 700; }
+
+  input[type="text"] {
+    flex: 1;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: #fff;
+    font: inherit;
+    font-size: 13px;
+  }
+
+  input[type="text"]::placeholder { color: #67717a; }
+
+  button {
+    border: 1px solid rgba(255,255,255,0.16);
+    border-radius: 3px;
+    background: rgba(255,255,255,0.07);
+    color: #fff;
+    font: inherit;
+    font-size: 12px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: background 140ms ease, transform 140ms ease;
+  }
+
+  button:hover { background: rgba(255,255,255,0.13); }
+  button:active { transform: translateY(1px); }
+</style>
+</head>
+<body>
+  <main class="game-frame">
+    <div class="hud">
+      <div>
+        <div class="server">SAMP-RP | Los Santos</div>
+        <div>Игроков онлайн: 128 / 500</div>
+      </div>
+      <div>Пинг: 42 мс</div>
+    </div>
+
+    <section class="chat-shell" id="chatShell" aria-label="Игровой чат">
+      <div class="scrollbar" id="scrollbar" aria-hidden="true">
+        <div class="scrollbar-thumb" id="scrollbarThumb"></div>
+      </div>
+
+      <div class="chat-viewport" id="chatViewport">
+        <div class="chat-track" id="chatTrack"></div>
+
+        <div class="chat-edge top"></div>
+        <div class="chat-edge bottom"></div>
+      </div>
+    </section>
+
+    <section class="controls">
+      <div class="controls-title">
+        <span>Настройки прокрутки</span>
+
+        <div class="presets">
+          <button class="preset-btn" data-preset="slow">Медленный</button>
+          <button class="preset-btn active" data-preset="medium">Средний</button>
+          <button class="preset-btn" data-preset="fast">Быстрый</button>
+        </div>
+      </div>
+
+      <div class="slider-group">
+        <label class="slider-label" for="wheelPower">
+          <span>Сила колесика</span>
+          <output class="slider-value" id="wheelPowerValue">1.35</output>
+        </label>
+        <input type="range" id="wheelPower" min="0.4" max="3" step="0.05" value="1.35">
+      </div>
+
+      <div class="slider-group">
+        <label class="slider-label" for="response">
+          <span>Мгновенный отклик</span>
+          <output class="slider-value" id="responseValue">0.045</output>
+        </label>
+        <input type="range" id="response" min="0" max="0.12" step="0.005" value="0.045">
+      </div>
+
+      <div class="slider-group">
+        <label class="slider-label" for="stiffness">
+          <span>Ускорение к цели</span>
+          <output class="slider-value" id="stiffnessValue">14</output>
+        </label>
+        <input type="range" id="stiffness" min="4" max="35" step="0.5" value="14">
+      </div>
+
+      <div class="slider-group">
+        <label class="slider-label" for="damping">
+          <span>Плавность / затухание</span>
+          <output class="slider-value" id="dampingValue">0.82</output>
+        </label>
+        <input type="range" id="damping" min="0.6" max="0.95" step="0.005" value="0.82">
+      </div>
+
+      <div class="slider-group">
+        <label class="slider-label" for="inertia">
+          <span>Инерция после скролла</span>
+          <output class="slider-value" id="inertiaValue">0.94</output>
+        </label>
+        <input type="range" id="inertia" min="0.75" max="0.99" step="0.005" value="0.94">
+      </div>
+
+      <div class="slider-group">
+        <label class="slider-label" for="reverseBrake">
+          <span>Торможение при развороте</span>
+          <output class="slider-value" id="reverseBrakeValue">0.35</output>
+        </label>
+        <input type="range" id="reverseBrake" min="0.05" max="0.9" step="0.05" value="0.35">
+      </div>
+    </section>
+
+    <form class="input-line" id="chatForm">
+      <span class="prompt">&gt;</span>
+      <input id="chatInput" type="text" maxlength="120" placeholder="Введите сообщение..." autocomplete="off">
+      <button type="submit">Отправить</button>
+    </form>
+  </main>
+
+<script>
+(() => {
+  "use strict";
+
+  const VIEWPORT_ROWS = 6;
+  const ROW_HEIGHT = 26;
+  const MAX_MESSAGES = 80;
+
+  const shell = document.getElementById("chatShell");
+  const viewport = document.getElementById("chatViewport");
+  const track = document.getElementById("chatTrack");
+  const scrollbar = document.getElementById("scrollbar");
+  const scrollbarThumb = document.getElementById("scrollbarThumb");
+  const form = document.getElementById("chatForm");
+  const input = document.getElementById("chatInput");
+
+  const sliders = {
+    wheelPower: document.getElementById("wheelPower"),
+    response: document.getElementById("response"),
+    stiffness: document.getElementById("stiffness"),
+    damping: document.getElementById("damping"),
+    inertia: document.getElementById("inertia"),
+    reverseBrake: document.getElementById("reverseBrake")
+  };
+
+  const outputs = {
+    wheelPower: document.getElementById("wheelPowerValue"),
+    response: document.getElementById("responseValue"),
+    stiffness: document.getElementById("stiffnessValue"),
+    damping: document.getElementById("dampingValue"),
+    inertia: document.getElementById("inertiaValue"),
+    reverseBrake: document.getElementById("reverseBrakeValue")
+  };
+
+  const presets = {
+    slow: {
+      wheelPower: 0.7,
+      response: 0.02,
+      stiffness: 7,
+      damping: 0.72,
+      inertia: 0.86,
+      reverseBrake: 0.2
+    },
+    medium: {
+      wheelPower: 1.35,
+      response: 0.045,
+      stiffness: 14,
+      damping: 0.82,
+      inertia: 0.94,
+      reverseBrake: 0.35
+    },
+    fast: {
+      wheelPower: 2.2,
+      response: 0.085,
+      stiffness: 26,
+      damping: 0.9,
+      inertia: 0.975,
+      reverseBrake: 0.65
+    }
+  };
+
+  const settings = { ...presets.medium };
+
+  const messages = [
+    ["[00:01]", "Server", "Добро пожаловать на SAMP-RP | Los Santos.", "c-green"],
+    ["[00:01]", "Admin_Bot", "Соблюдайте правила сервера и уважайте других игроков.", "c-yellow"],
+    ["[00:02]", "Vito_Corleone", "Кто едет на гонки в аэропорт?", "c-white"],
+    ["[00:02]", "Marco_Rossi", "Я за, у меня Sultan полностью тюненый.", "c-blue"],
+    ["[00:03]", "LSPD_Radio", "Внимание всем патрулям: нарушение ПДД на Grove Street.", "c-red"],
+    ["[00:03]", "Anna_Kim", "Продам дом в Vinewood, писать в ЛС.", "c-purple"],
+    ["[00:04]", "Dmitry_Volkov", "Кто хочет поработать дальнобойщиком?", "c-white"],
+    ["[00:04]", "Sara_Miller", "Мне нужны материалы для ремонта, кто поможет?", "c-white"],
+    ["[00:05]", "Tony_Montana", "Собираемся у банка, через пять минут.", "c-yellow"],
+    ["[00:05]", "Police_Chief", "Патруль №4, выдвигайтесь к аэропорту.", "c-blue"],
+    ["[00:06]", "Nikita_Orlov", "Куплю охотничье ружьё, недорого.", "c-white"],
+    ["[00:06]", "Emma_Watson", "Кто видел моего кота около магазина?", "c-white"],
+    ["[00:07]", "Racer_X", "Гонка начинается через 2 минуты!", "c-yellow"],
+    ["[00:07]", "Vito_Corleone", "Я уже на месте.", "c-green"],
+    ["[00:08]", "Mechanic_Joe", "Ремонт и покраска автомобилей, район Doherty.", "c-blue"],
+    ["[00:08]", "Lena_Petrova", "Ищу работу в такси, есть права категории B.", "c-white"],
+    ["[00:09]", "Grove_Family", "Встреча на районе, все свои.", "c-green"],
+    ["[00:09]", "Ballas_Gang", "Не лезьте на нашу территорию.", "c-red"],
+    ["[00:10]", "Admin_Bot", "Игрок Vito_Corleone получил предупреждение за оскорбления.", "c-yellow"],
+    ["[00:10]", "Marco_Rossi", "Гонка была отличная, спасибо организаторам.", "c-blue"],
+    ["[00:11]", "Anna_Kim", "Продаю квартиру в Los Santos за 250.000$.", "c-purple"],
+    ["[00:11]", "Dmitry_Volkov", "Кто может подвезти до San Fierro?", "c-white"],
+    ["[00:12]", "LSPD_Radio", "Задержан подозреваемый в угоне автомобиля.", "c-red"],
+    ["[00:12]", "Server", "Автоматическое сохранение мира завершено.", "c-green"],
+	["[00:01]", "Server", "Добро пожаловать на SAMP-RP | Los Santos.", "c-green"],
+    ["[00:01]", "Admin_Bot", "Соблюдайте правила сервера и уважайте других игроков.", "c-yellow"],
+    ["[00:02]", "Vito_Corleone", "Кто едет на гонки в аэропорт?", "c-white"],
+    ["[00:02]", "Marco_Rossi", "Я за, у меня Sultan полностью тюненый.", "c-blue"],
+    ["[00:03]", "LSPD_Radio", "Внимание всем патрулям: нарушение ПДД на Grove Street.", "c-red"],
+    ["[00:03]", "Anna_Kim", "Продам дом в Vinewood, писать в ЛС.", "c-purple"],
+    ["[00:04]", "Dmitry_Volkov", "Кто хочет поработать дальнобойщиком?", "c-white"],
+    ["[00:04]", "Sara_Miller", "Мне нужны материалы для ремонта, кто поможет?", "c-white"],
+    ["[00:05]", "Tony_Montana", "Собираемся у банка, через пять минут.", "c-yellow"],
+    ["[00:05]", "Police_Chief", "Патруль №4, выдвигайтесь к аэропорту.", "c-blue"],
+    ["[00:06]", "Nikita_Orlov", "Куплю охотничье ружьё, недорого.", "c-white"],
+    ["[00:06]", "Emma_Watson", "Кто видел моего кота около магазина?", "c-white"],
+    ["[00:07]", "Racer_X", "Гонка начинается через 2 минуты!", "c-yellow"],
+    ["[00:07]", "Vito_Corleone", "Я уже на месте.", "c-green"],
+    ["[00:08]", "Mechanic_Joe", "Ремонт и покраска автомобилей, район Doherty.", "c-blue"],
+    ["[00:08]", "Lena_Petrova", "Ищу работу в такси, есть права категории B.", "c-white"],
+    ["[00:09]", "Grove_Family", "Встреча на районе, все свои.", "c-green"],
+    ["[00:09]", "Ballas_Gang", "Не лезьте на нашу территорию.", "c-red"],
+    ["[00:10]", "Admin_Bot", "Игрок Vito_Corleone получил предупреждение за оскорбления.", "c-yellow"],
+    ["[00:10]", "Marco_Rossi", "Гонка была отличная, спасибо организаторам.", "c-blue"],
+    ["[00:11]", "Anna_Kim", "Продаю квартиру в Los Santos за 250.000$.", "c-purple"],
+    ["[00:11]", "Dmitry_Volkov", "Кто может подвезти до San Fierro?", "c-white"],
+    ["[00:12]", "LSPD_Radio", "Задержан подозреваемый в угоне автомобиля.", "c-red"],
+    ["[00:12]", "Server", "Автоматическое сохранение мира завершено.", "c-green"]
+  ];
+
+  let offsetY = 0;
+  let velocity = 0;
+  let targetOffset = 0;
+  let rafId = null;
+  let lastFrameTime = null;
+  let isHovering = false;
+
+  function createRow(time, nick, text, colorClass) {
+    const row = document.createElement("div");
+    row.className = "chat-row";
+
+    const timeEl = document.createElement("span");
+    timeEl.className = "time";
+    timeEl.textContent = time;
+
+    const nickEl = document.createElement("span");
+    nickEl.className = `nick ${colorClass}`;
+    nickEl.textContent = nick + ":";
+
+    const textEl = document.createElement("span");
+    textEl.className = "message c-white";
+    textEl.textContent = text;
+
+    row.append(timeEl, nickEl, textEl);
+    return row;
+  }
+
+  function renderMessages() {
+    const fragment = document.createDocumentFragment();
+
+    for (const [time, nick, text, color] of messages) {
+      fragment.appendChild(createRow(time, nick, text, color));
+    }
+
+    track.replaceChildren(fragment);
+    clampOffsets(true);
+    updateScrollbar();
+  }
+
+  function getMaxOffset() {
+    return Math.max(0, track.scrollHeight - viewport.clientHeight);
+  }
+
+  function clampOffsets(instant = false) {
+    const max = getMaxOffset();
+
+    targetOffset = Math.min(Math.max(targetOffset, 0), max);
+    offsetY = Math.min(Math.max(offsetY, 0), max);
+
+    if (instant) {
+      velocity = 0;
+      applyOffset();
+    }
+
+    shell.classList.toggle("can-scroll-up", offsetY > 0.5);
+    shell.classList.toggle("can-scroll-down", offsetY < max - 0.5);
+    updateScrollbar();
+  }
+
+  function applyOffset() {
+    track.style.transform = `translate3d(0, ${-offsetY}px, 0)`;
+  }
+
+  function updateScrollbar() {
+    const max = getMaxOffset();
+    const viewportHeight = viewport.clientHeight;
+    const contentHeight = track.scrollHeight;
+
+    if (max <= 0.5) {
+      scrollbar.classList.add("disabled");
+      scrollbarThumb.style.height = `${viewportHeight}px`;
+      scrollbarThumb.style.top = "0px";
+      return;
+    }
+
+    scrollbar.classList.remove("disabled");
+
+    const thumbRatio = Math.min(1, viewportHeight / contentHeight);
+    const thumbHeight = Math.max(24, viewportHeight * thumbRatio);
+    const scrollRatio = offsetY / max;
+    const thumbTop = scrollRatio * (viewportHeight - thumbHeight);
+
+    scrollbarThumb.style.height = `${thumbHeight}px`;
+    scrollbarThumb.style.top = `${thumbTop}px`;
+  }
+
+  function normalizeWheelDelta(event) {
+    if (event.deltaMode === 1) return event.deltaY * ROW_HEIGHT;
+    if (event.deltaMode === 2) return event.deltaY * viewport.clientHeight;
+    return event.deltaY;
+  }
+
+  function startAnimation() {
+    if (rafId !== null) return;
+
+    lastFrameTime = performance.now();
+    rafId = requestAnimationFrame(update);
+  }
+
+  function update(now) {
+    const dt = Math.min((now - lastFrameTime) / 1000, 0.05);
+    lastFrameTime = now;
+
+    const max = getMaxOffset();
+    const distance = targetOffset - offsetY;
+
+    // Ключевое исправление: если пользователь скроллит в другую сторону,
+    // прежняя инерция сначала резко гасится, а затем меняет направление.
+    const sameDirection = Math.sign(velocity) === Math.sign(distance) || velocity === 0;
+
+    if (!sameDirection) {
+      const brake = 1 - settings.reverseBrake * Math.min(1, dt * 60);
+      velocity *= brake;
+
+      // Если скорость уже почти погашена — мгновенно разворачиваем её,
+      // чтобы не было ощущения «тупого» сопротивления.
+      if (Math.abs(velocity) < Math.abs(distance) * 0.12) {
+        velocity = distance * settings.response * 60;
+      }
+    }
+
+    // Пружинное движение к целевой позиции.
+    velocity += distance * settings.stiffness * dt;
+    velocity *= Math.pow(settings.damping, dt * 60);
+
+    offsetY += velocity * dt;
+
+    // Инерция после прекращения ввода.
+    if (!isHovering) {
+      velocity *= Math.pow(settings.inertia, dt * 60);
+    }
+
+    // Мягкие границы.
+    if (offsetY < 0) {
+      offsetY += (0 - offsetY) * 0.25;
+      velocity *= 0.55;
+    } else if (offsetY > max) {
+      offsetY += (max - offsetY) * 0.25;
+      velocity *= 0.55;
+    }
+
+    const settled =
+      Math.abs(distance) < 0.08 &&
+      Math.abs(velocity) < 0.08 &&
+      offsetY >= -0.5 &&
+      offsetY <= max + 0.5;
+
+    if (settled) {
+      offsetY = Math.min(Math.max(offsetY, 0), max);
+      velocity = 0;
+      targetOffset = offsetY;
+
+      applyOffset();
+      clampOffsets();
+
+      rafId = null;
+      return;
+    }
+
+    applyOffset();
+    clampOffsets();
+    rafId = requestAnimationFrame(update);
+  }
+
+  viewport.addEventListener("wheel", (event) => {
+    event.preventDefault();
+
+    const rawDelta = normalizeWheelDelta(event);
+    const impulse = Math.max(-260, Math.min(260, rawDelta)) * settings.wheelPower;
+
+    targetOffset += impulse;
+
+    const newDirection = Math.sign(impulse);
+    const oldDirection = Math.sign(velocity);
+
+    if (oldDirection !== 0 && newDirection !== 0 && oldDirection !== newDirection) {
+      // Разворот: сначала тормозим прежнюю инерцию.
+      velocity *= 1 - settings.reverseBrake;
+    }
+
+    // Добавляем отклик в выбранном направлении.
+    velocity += impulse * settings.response;
+
+    clampOffsets();
+    startAnimation();
+  }, { passive: false });
+
+  viewport.addEventListener("pointerenter", () => {
+    isHovering = true;
+  });
+
+  viewport.addEventListener("pointerleave", () => {
+    isHovering = false;
+    startAnimation();
+  });
+
+  // Drag по чату
+  let draggingChat = false;
+  let dragStartY = 0;
+  let dragStartOffset = 0;
+
+  viewport.addEventListener("pointerdown", (event) => {
+    draggingChat = true;
+    dragStartY = event.clientY;
+    dragStartOffset = offsetY;
+    velocity = 0;
+    viewport.setPointerCapture(event.pointerId);
+  });
+
+  viewport.addEventListener("pointermove", (event) => {
+    if (!draggingChat) return;
+
+    const delta = dragStartY - event.clientY;
+    targetOffset = dragStartOffset + delta;
+    velocity = (targetOffset - offsetY) * 12;
+
+    clampOffsets();
+    startAnimation();
+  });
+
+  const stopChatDrag = (event) => {
+    if (!draggingChat) return;
+
+    draggingChat = false;
+    viewport.releasePointerCapture(event.pointerId);
+    startAnimation();
+  };
+
+  viewport.addEventListener("pointerup", stopChatDrag);
+  viewport.addEventListener("pointercancel", stopChatDrag);
+
+  // Drag по левому скроллбару
+  let draggingBar = false;
+  let barStartY = 0;
+  let barStartOffset = 0;
+
+  scrollbar.addEventListener("pointerdown", (event) => {
+    if (scrollbar.classList.contains("disabled")) return;
+
+    draggingBar = true;
+    scrollbar.classList.add("dragging");
+    barStartY = event.clientY;
+    barStartOffset = offsetY;
+    velocity = 0;
+    scrollbar.setPointerCapture(event.pointerId);
+  });
+
+  scrollbar.addEventListener("pointermove", (event) => {
+    if (!draggingBar) return;
+
+    const max = getMaxOffset();
+    if (max <= 0) return;
+
+    const viewportHeight = viewport.clientHeight;
+    const contentHeight = track.scrollHeight;
+    const thumbRatio = Math.min(1, viewportHeight / contentHeight);
+    const thumbHeight = Math.max(24, viewportHeight * thumbRatio);
+    const usableBarHeight = viewportHeight - thumbHeight;
+
+    const barDelta = event.clientY - barStartY;
+    const contentDelta = (barDelta / usableBarHeight) * max;
+
+    targetOffset = barStartOffset + contentDelta;
+    velocity = (targetOffset - offsetY) * 18;
+
+    clampOffsets();
+    startAnimation();
+  });
+
+  const stopBarDrag = (event) => {
+    if (!draggingBar) return;
+
+    draggingBar = false;
+    scrollbar.classList.remove("dragging");
+    scrollbar.releasePointerCapture(event.pointerId);
+    startAnimation();
+  };
+
+  scrollbar.addEventListener("pointerup", stopBarDrag);
+  scrollbar.addEventListener("pointercancel", stopBarDrag);
+
+  // Ползунки
+  function formatValue(key, value) {
+    if (key === "stiffness") return value.toFixed(1);
+    return value.toFixed(3).replace(/0+$/, "").replace(/\.$/, "");
+  }
+
+  function syncSliderUI(key) {
+    outputs[key].textContent = formatValue(key, settings[key]);
+  }
+
+  for (const key of Object.keys(sliders)) {
+    sliders[key].addEventListener("input", () => {
+      settings[key] = Number(sliders[key].valueAsNumber);
+      syncSliderUI(key);
+
+      document.querySelectorAll(".preset-btn").forEach((button) => {
+        button.classList.remove("active");
+      });
+
+      startAnimation();
+    });
+  }
+
+  function applyPreset(name) {
+    Object.assign(settings, presets[name]);
+
+    for (const key of Object.keys(sliders)) {
+      sliders[key].value = settings[key];
+      syncSliderUI(key);
+    }
+
+    document.querySelectorAll(".preset-btn").forEach((button) => {
+      button.classList.toggle("active", button.dataset.preset === name);
+    });
+
+    startAnimation();
+  }
+
+  document.querySelectorAll(".preset-btn").forEach((button) => {
+    button.addEventListener("click", () => {
+      applyPreset(button.dataset.preset);
+    });
+  });
+
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+
+    const text = input.value.trim();
+    if (!text) return;
+
+    const now = new Date();
+    const time = `[${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}]`;
+
+    messages.push([time, "You", text, "c-green"]);
+
+    if (messages.length > MAX_MESSAGES) {
+      messages.shift();
+    }
+
+    renderMessages();
+
+    targetOffset = getMaxOffset();
+    startAnimation();
+
+    input.value = "";
+    input.focus();
+  });
+
+  window.addEventListener("resize", () => {
+    clampOffsets(true);
+  });
+
+  applyPreset("medium");
+  renderMessages();
+})();
+</script>
+</body>
+</html>

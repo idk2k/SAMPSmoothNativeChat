@@ -86,13 +86,13 @@ public:
     float GetPosition() const { return position; }
     bool IsActive() const { return active; }
 
-    // Настройки, которые потом можно вывести в ImGui-слайдеры.
-    float wheelPower    = 1.35f;
-    float response      = 0.045f;
-    float stiffness     = 14.0f;
-    float damping       = 0.82f;
-    float inertia       = 0.94f;
-    float reverseBrake  = 0.35f;
+    // Settings
+    float wheelPower    = 0.85f;
+    float response      = 0.085f;
+    float stiffness     = 26.0f;
+    float damping       = 0.9f;
+    float inertia       = 0.77f;
+    float reverseBrake  = 0.65f;
 
 private:
     float position = 0.0f;

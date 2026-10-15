@@ -102,3 +102,48 @@ private:
 };
 
 ChatScrollPhysics g_scroll;
+
+class FrameClock {
+public:
+    FrameClock() {
+        LARGE_INTEGER frequency{};
+        QueryPerformanceFrequency(&frequency);
+        m_frequency = static_cast<double>(frequency.QuadPart);
+
+        LARGE_INTEGER counter{};
+        QueryPerformanceCounter(&counter);
+        m_previous = counter.QuadPart;
+    }
+
+    float Tick() {
+        LARGE_INTEGER counter{};
+        QueryPerformanceCounter(&counter);
+
+        const double delta =
+            static_cast<double>(counter.QuadPart - m_previous) / m_frequency;
+
+        m_previous = counter.QuadPart;
+
+        // Защита от лагов, пауз и переключения окон.
+        return static_cast<float>(std::min(delta, 0.05));
+    }
+
+private:
+    double m_frequency = 1.0;
+    LONGLONG m_previous = 0;
+};
+
+FrameClock g_frameClock;
+
+using Scroll_t = void(__fastcall*)(void*, void*, int);
+Scroll_t fpScroll = nullptr;
+
+auto __fastcall ScrollHooked(void* ecx, void* edx, int nDelta) -> void {
+    // В SAMP nDelta обычно равен 1 или -1.
+    g_scroll.AddImpulse(nDelta, g_scroll.wheelPower);
+
+    // Всё равно вызываем оригинал: SAMP должен знать о событии.
+    fpScroll(ecx, edx, nDelta);
+}
+
+

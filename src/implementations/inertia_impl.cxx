@@ -147,3 +147,29 @@ auto __fastcall ScrollHooked(void* ecx, void* edx, int nDelta) -> void {
 }
 
 
+using Render_t = void(__fastcall*)(void*, void*);
+Render_t fpRender = nullptr;
+
+auto __fastcall RenderHooked(void* ecx, void* edx) -> void {
+    fpRender(ecx, edx);
+
+    const float dt = g_frameClock.Tick();
+
+    const int current = static_cast<int>(get_scrollbar_pointer_pos());
+    const int minPosition = static_cast<int>(get_min_scrollbar_position_index());
+    const int maxPosition = 87; // Ваш текущий нижний предел.
+
+    g_scroll.Update(dt, minPosition, maxPosition);
+
+    // При активной инерции синхронизируем целый указатель скроллбара.
+    if (g_scroll.IsActive()) {
+        const int targetInteger =
+            static_cast<int>(std::round(g_scroll.GetPosition()));
+
+        int difference = targetInteger - current;
+
+        if (difference != 0) {
+            move_scrollbar_pointer(difference);
+        }
+    }
+}

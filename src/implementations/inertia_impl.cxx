@@ -147,6 +147,13 @@ auto __fastcall ScrollHooked(void* ecx, void* edx, int nDelta) -> void {
 }
 
 
+void move_scrollbar_pointer(int offset) {
+    ((void(__thiscall*)(void* ecx, int delta))(addresses.samp_base + 0x84190))(*(void**)(addresses.g_chat + 0x11E), offset);
+}
+DWORD get_scrollbar_pointer_pos() {
+    return *(DWORD*)((char*)(*(void**)(addresses.g_chat + 0x11E)) + 142);
+}
+
 using Render_t = void(__fastcall*)(void*, void*);
 Render_t fpRender = nullptr;
 

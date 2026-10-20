@@ -26,6 +26,12 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 
 #pragma intrinsic(_ReturnAddress)
 
+bool initialize{false};
+bool bMenuOpen{false};
+bool bCursorShown{false};
+
+WNDPROC m_pWindowProc;
+
 class ChatScrollPhysics {
 public:
     void AddImpulse(int direction, float power) {
@@ -180,3 +186,135 @@ auto __fastcall RenderHooked(void* ecx, void* edx) -> void {
         }
     }
 }
+
+using RenderEntry_t = void(__fastcall*)(
+    void*,
+    void*,
+    const char*,
+    structures::CRect,
+    structures::D3DCOLOR
+);
+
+RenderEntry_t fpRenderEntry = nullptr;
+
+auto __fastcall RenderEntryHooked(
+    void* ecx,
+    void* edx,
+    const char* szText,
+    structures::CRect rect,
+    structures::D3DCOLOR color
+) -> void {
+    if (g_scroll.IsActive()) {
+        // Дробная часть позиции: например, 12.45 -> 0.45.
+        const float fractional =
+            g_scroll.GetPosition() - std::floor(g_scroll.GetPosition());
+
+        const float rowHeight = 20.0f; // Подставьте реальную высоту строки чата.
+
+        // Направление зависит от того, как SAMP интерпретирует rect.top:
+        // если при прокрутке вниз строки должны уезжать вверх — знак минус.
+        rect.top += static_cast<long>(fractional * rowHeight);
+    }
+
+    fpRenderEntry(ecx, edx, szText, rect, color);
+}
+
+
+using ProtPresent = HRESULT(__stdcall*)(IDirect3DDevice9*, CONST RECT*, CONST RECT*, HWND, CONST RGNDATA*);
+using ProtReset = HRESULT(__stdcall*)(IDirect3DDevice9*, D3DPRESENT_PARAMETERS*);
+using DrawSpriteFP = HRESULT(__stdcall*)(ID3DXSprite*, LPDIRECT3DTEXTURE9, const RECT*, const D3DXVECTOR3*,
+                                         const D3DXVECTOR3*, D3DCOLOR);
+ProtReset Reset;
+ProtPresent Present;
+DrawSpriteFP DrawSprite;
+HRESULT __stdcall Hooked_Present(IDirect3DDevice9* pDevice, CONST RECT* pSrcRect, CONST RECT* pDestRect,
+                                 HWND hDestWindow, CONST RGNDATA* pDirtyRegion);
+HRESULT __stdcall Hooked_Reset(LPDIRECT3DDEVICE9 pDevice, D3DPRESENT_PARAMETERS* pPresentParams);
+HRESULT __stdcall Hooked_DrawSprite(ID3DXSprite* sprite, LPDIRECT3DTEXTURE9 pTexture, const RECT* pSrcRect,
+                                    const D3DXVECTOR3* pCenter, const D3DXVECTOR3* pPosition, D3DCOLOR Color);
+
+bool ToggleCursor(bool state);
+HRESULT __stdcall Hooked_Present(IDirect3DDevice9* pDevice, CONST RECT* pSrcRect, CONST RECT* pDestRect,
+                                 HWND hDestWindow, CONST RGNDATA* pDirtyRegion) {
+    static bool once = false;
+    if (!once) {
+        ImGui::CreateContext();
+        ImGui_ImplWin32_Init(**reinterpret_cast<HWND**>(0xC17054));
+#pragma warning(push)
+#pragma warning(disable : 4996)
+        std::string font{getenv("WINDIR")};
+        font += "\\Fonts\\Tahoma.TTF";
+#pragma warning(pop)
+        ImGui::GetIO().Fonts->AddFontFromFileTTF(font.c_str(), 14.0f, NULL,
+                                                 ImGui::GetIO().Fonts->GetGlyphRangesCyrillic());
+        // Theme();
+        ImGui_ImplDX9_Init(pDevice);
+        once = true;
+    }
+    ImGui_ImplDX9_NewFrame();
+    ImGui_ImplWin32_NewFrame();
+    ImGui::NewFrame();
+    if (bMenuOpen) {
+        if (bCursorShown == 0) {
+            bCursorShown = ToggleCursor(1);
+        }
+        int sx = *reinterpret_cast<int*>(0x00C17044), sy = *reinterpret_cast<int*>(0x00C17048);
+        ImGui::SetNextWindowPos(ImVec2(static_cast<float>(sx) / 2, static_cast<float>(sy) / 2), ImGuiCond_FirstUseEver);
+        ImGui::Begin("SAMPChatEasings Menu", &bMenuOpen,
+                     ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
+
+        ImGui::SameLine();
+        ImGui::SliderFloat("Wheel power", &g_scroll.wheelPower, 0.4f, 3.0f, "%.2f");
+        ImGui::SliderFloat("Response", &g_scroll.response, 0.0f, 0.12f, "%.3f");
+        ImGui::SliderFloat("Stiffness", &g_scroll.stiffness, 4.0f, 35.0f, "%.1f");
+        ImGui::SliderFloat("Damping", &g_scroll.damping, 0.60f, 0.95f, "%.3f");
+        ImGui::SliderFloat("Inertia", &g_scroll.inertia, 0.75f, 0.99f, "%.3f");
+        ImGui::SliderFloat("Reverse brake", &g_scroll.reverseBrake, 0.05f, 0.90f, "%.2f");
+
+        if (ImGui::Button("Slow")) {
+            g_scroll.wheelPower = 0.70f;
+            g_scroll.response = 0.020f;
+            g_scroll.stiffness = 7.0f;
+            g_scroll.damping = 0.72f;
+            g_scroll.inertia = 0.86f;
+            g_scroll.reverseBrake = 0.20f;
+        }
+
+        ImGui::SameLine();
+
+        if (ImGui::Button("Medium")) {
+            g_scroll.wheelPower = 1.35f;
+            g_scroll.response = 0.045f;
+            g_scroll.stiffness = 14.0f;
+            g_scroll.damping = 0.82f;
+            g_scroll.inertia = 0.94f;
+            g_scroll.reverseBrake = 0.35f;
+        }
+
+        ImGui::SameLine();
+
+        if (ImGui::Button("Fast")) {
+            g_scroll.wheelPower = 2.20f;
+            g_scroll.response = 0.085f;
+            g_scroll.stiffness = 26.0f;
+            g_scroll.damping = 0.90f;
+            g_scroll.inertia = 0.975f;
+            g_scroll.reverseBrake = 0.65f;
+        }
+
+        ImGui::End();
+    } else if (bCursorShown == 1) {
+        bCursorShown = ToggleCursor(0);
+    }
+    ImGui::EndFrame();
+    ImGui::Render();
+    ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
+    return Present(pDevice, pSrcRect, pDestRect, hDestWindow, pDirtyRegion);
+}
+
+HRESULT __stdcall Hooked_Reset(LPDIRECT3DDEVICE9 pDevice, D3DPRESENT_PARAMETERS* pPresentParams) {
+    ImGui_ImplDX9_InvalidateDeviceObjects();
+    return Reset(pDevice, pPresentParams);
+}
+
+

@@ -318,3 +318,36 @@ HRESULT __stdcall Hooked_Reset(LPDIRECT3DDEVICE9 pDevice, D3DPRESENT_PARAMETERS*
 }
 
 
+void InstallSampHooks() {
+    utils::MH_CreateAndEnableHook(
+        addresses.samp_base + 0x638A0,
+        &RenderEntryHooked,
+        reinterpret_cast<LPVOID*>(&fpRenderEntry)
+    );
+
+    utils::MH_CreateAndEnableHook(
+        addresses.samp_base + 0x64010,
+        &AddEntryHooked,
+        reinterpret_cast<LPVOID*>(&fpAddEntry)
+    );
+
+    utils::MH_CreateAndEnableHook(
+        addresses.samp_base + 0x63550,
+        &RecalcFontSizeHooked,
+        reinterpret_cast<LPVOID*>(&fpRecalcFontSize)
+    );
+
+    utils::MH_CreateAndEnableHook(
+        addresses.samp_base + 0x637F0,
+        &ScrollHooked,
+        reinterpret_cast<LPVOID*>(&fpScroll)
+    );
+
+    utils::MH_CreateAndEnableHook(
+        addresses.samp_base + 0x63D70,
+        &RenderHooked,
+        reinterpret_cast<LPVOID*>(&fpRender)
+    );
+
+    MH_ApplyQueued();
+}

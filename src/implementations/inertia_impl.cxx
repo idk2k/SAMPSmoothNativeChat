@@ -185,6 +185,10 @@ auto __fastcall RenderHooked(void* ecx, void* edx) -> void {
             move_scrollbar_pointer(difference);
         }
     }
+    std::cout << "dt=" << dt
+          << " pos=" << g_scroll.GetPosition()
+          << " vel=" << g_scroll.velocity
+          << '\n';
 }
 
 using RenderEntry_t = void(__fastcall*)(

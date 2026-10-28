@@ -1,6 +1,8 @@
 # SAMPSmoothNativeChat
 
-Плагин для замены стандартного чата SA-MP на кастомный рендерер с использованием DirectX 9. Добавляет плавную прокрутку на пружинах, таймстампы, поддержку HEX-цветов `{RRGGBB}` и синхронизацию со стандартным скроллбаром. Настраивается через JSON-файл без необходимости пересборки.
+A complete replacement for the native SA-MP chat with a custom renderer built on pure DirectX 9.
+Features smooth spring-based scrolling, timestamps, `{RRGGBB}` colored messages,
+DXUT scrollbar synchronization, and JSON-based configuration — without ImGui or DXUT.
 
 ![Platform](https://img.shields.io/badge/platform-Windows%20x86-blue)
 ![Game](https://img.shields.io/badge/game-GTA%20SA%201.0-green)
@@ -8,48 +10,65 @@
 
 ---
 
-## Функционал
+## Features
 
-- Отрисовка чата через `ID3DXFont` + `ID3DXSprite` в `EndScene` (без использования ImGui и DXUT).
-- Плавная физика прокрутки на основе пружинного демпфера (`position / velocity / target`).
-- Автоматический скролл вниз при получении новых сообщений.
-- Фиксация положения строк при просмотре истории (сообщения не смещаются при добавлении новых).
-- Корректный парсинг цветовых кодов `{RRGGBB}` внутри строк.
-- Добавление таймстампов времени `[HH:MM]` к каждому сообщению.
-- Синхронизация с нативным DXUT-скроллбаром (поддерживается перемещение ползунка мышью).
-- Временное игнорирование обратной связи (grace period) после перетаскивания ползунка во избежание зацикливания скролла.
-- Полупрозрачный градиентный фон, отображаемый при открытой строке ввода.
-- Вынос всех ключевых параметров в файл конфигурации `config.json`.
-- Встроенный логгер с указанием времени до миллисекунд, ID потока и уровней логирования.
-
----
-
-## Совместимость и требования
-
-- **Игра:** GTA San Andreas 1.0 US.
-- **Мультиплеер:** SA-MP 0.3.7 **R5** (включая R5-1 и R5-2).
-- **DirectX:** 9.0c.
-- **Инструменты сборки:** MSVC (Visual Studio 2019 / 2022), стандарт C++17.
-- **Тип сборки:** `/MT` или `/MD` (Debug / Release).
-
-> ⚠️ **Важно:** Адреса функций и смещения в памяти жестко привязаны к версии **0.3.7 R5**. Плагин не будет работать на версиях R1, R2, 0.3.DL и других без изменения оффсетов в файлах `ChatHooks.cpp` и `dllmain.cpp`.
+- Complete replacement of the native SA-MP chat with a custom renderer (`ID3DXFont` + `ID3DXSprite`)
+- Rendering in `EndScene` — no ImGui, DXUT, or extra dependencies
+- Smooth spring-damper scroll physics (`position / velocity / target`)
+- Auto-stick to the bottom when new messages arrive
+- Correct behavior while reading history (lines don't "jump")
+- Support for `{RRGGBB}` color codes inside messages
+- `[HH:MM]` timestamps for each message
+- Synchronization with the native DXUT scrollbar
+- Mouse-draggable scrollbar with chat synchronization
+- Feedback-loop protection (grace period after dragging)
+- Gradient semi-transparent background when the input box is open
+- JSON-based configuration — no rebuild required
+- Colored logger with levels, millisecond timestamps, and thread IDs
+- Clean architecture: physics / buffer / renderer / scrollbar are separated
 
 ---
 
-## Установка
+## Compatibility
 
-1. Скомпилируйте проект в Visual Studio, выбрав конфигурацию `Release` и платформу `x86`.
-2. Перенесите скомпилированный файл `SAMPSmoothNativeChat.asi` в корень игры или в папку `scripts`.
-3. Поместите файл `config.json` в ту же директорию, куда был установлен плагин.
-4. Убедитесь, что у вас установлен ASI Loader (например, `vorbisFile.dll` или `Ultimate ASI Loader`).
+| Component | Support |
+|---|---|
+| Game | GTA San Andreas 1.0 US (HUD/rendering via D3D9) |
+| Multiplayer | SA-MP 0.3.7 **R5** (R5-1 / R5-2) |
+| Architecture | Windows x86 (32-bit) |
+| DirectX | DirectX 9.0c |
+| Compiler | MSVC (Visual Studio 2019/2022), C++17 |
+| Build | Debug / Release, `/MT` or `/MD` |
+| ImGui / DXUT | Not used |
 
-Скроллбар инициализируется автоматически при первом выводе сообщения в чат.
+> ⚠️ SA-MP function addresses are specific to **R5**. The plugin will not work
+> on other versions (R1, 0.3.DL, 0.3.8, etc.) without updating the addresses
+> in `ChatHooks.cpp` and `dllmain.cpp`.
 
 ---
 
-## Настройка (`config.json`)
+## Installation
 
-Конфигурационный файл должен находиться в одной папке с файлом плагина.
+1. Build the project in Visual Studio (x86, Release).
+2. Copy the resulting `.asi` file to the game folder:
+   ```text
+   GTA San Andreas/scripts/SAMPSmoothNativeChat.asi
+   ```
+3. Copy `config.json` next to the `.asi` file:
+   ```text
+   GTA San Andreas/scripts/config.json
+   ```
+4. Make sure an ASI Loader is installed (e.g., `vorbisFile.dll` / `Ultimate ASI Loader`).
+5. Launch the game and connect to a server.
+
+When the first message appears in the chat, the native DXUT scrollbar
+will show up, synchronized with your scroll physics.
+
+---
+
+## Configuration
+
+All parameters are configured in `config.json` next to the `.asi` file:
 
 ```json
 {
@@ -85,96 +104,122 @@
 }
 ```
 
-- Если файл `config.json` отсутствует или поврежден, плагин применит стандартные настройки по умолчанию.
-- Изменения конфигурации вступают в силу после перезапуска игры.
+### Parameter groups
+
+| Group | Purpose |
+|---|---|
+| `chat` | Position, size, font, message history limit |
+| `scroll` | Scroll speed and spring physics |
+| `timestamps` | Timestamp enable/disable and color |
+| `background` | Chat background and transparency gradient |
+| `scrollbar` | DXUT scrollbar synchronization enable/disable |
+| `log` | Logging level |
+
+- If `config.json` is missing or corrupted, default values are used.
+- Changes take effect after restarting the game.
 
 ---
 
-## Архитектура проекта
+## Architecture
 
 ```text
 DllMain
-└── InitializationThread (ожидает инициализацию CChatInfo)
-    ├── InstallD3DHooks (перехват EndScene, Reset)
-    └── InstallChatHooks (перехват AddEntry, Render, Scroll)
+└── InitializationThread (waits for CChatInfo)
+    ├── InstallD3DHooks (EndScene, Reset)
+    └── InstallChatHooks (AddEntry, Render, Scroll)
 
-EndScene (выполняется каждый кадр)
-├── ScrollPhysics.Update(dt)      — расчет параметров плавного скролла
+EndScene (every frame)
+├── ScrollPhysics.Update(dt)      — spring physics
 ├── RenderChat()
-│   ├── Отрисовка подложки чата (градиент через ID3DXSprite)
-│   └── Вывод текста строк (разбивка на токены {RRGGBB} через ID3DXFont)
-└── IScrollbarView.SetPosition()  — обновление позиции ползунка DXUT
+│   ├── background (ID3DXSprite, gradient)
+│   └── text (ID3DXFont, {RRGGBB} segments)
+└── IScrollbarView.SetPosition()  — DXUT scrollbar sync
 ```
 
-### Назначение основных модулей
+### Modules
 
-- `Config.h` / `ConfigLoader.cpp` — загрузка и парсинг настроек из JSON.
-- `ScrollPhysics.h` — mathematical модель физики пружины для плавного скролла.
-- `ChatTextParser.h` — парсинг HEX-кодов цветов и деление строк на текстовые сегменты.
-- `ChatBuffer.h` — организация кольцевого буфера для хранения истории сообщений.
-- `ChatHooks.cpp` — перехват функций сампа (`AddEntry`, `Render`, `Scroll`).
-- `D3DHooks.cpp` — перехват функций Direct3D9 (`EndScene`, `Reset`).
-- `ChatRenderer.cpp` — рендеринг текстовых элементов, фона чата и ограничение области вывода (clipping).
-- `ScrollbarView.h` / `NativeDxutScrollbarView.h` — абстракция и реализация взаимодействия с нативным скроллбаром.
+| Module | File | Purpose |
+|---|---|---|
+| Config | `Config.h`, `ConfigLoader.cpp` | JSON configuration |
+| Physics | `ScrollPhysics.h` | Spring-based scrolling |
+| Parser | `ChatTextParser.h` | `{RRGGBB}` → color segments |
+| Buffer | `ChatBuffer.h` | Custom message history |
+| SA-MP hooks | `ChatHooks.cpp` | `AddEntry`, `Render`, `Scroll` |
+| D3D hooks | `D3DHooks.cpp` | `EndScene`, `Reset` |
+| Renderer | `ChatRenderer.cpp` | Background + text + clipping |
+| Scrollbar | `ScrollbarView.h`, `NativeDxutScrollbarView.h` | Abstraction + DXUT |
 
 ---
 
-## Используемые адреса памяти (SA-MP 0.3.7 R5)
+## Used addresses (SA-MP 0.3.7 R5)
 
-Все указанные смещения (RVA) отсчитываются от базового адреса загрузки модуля `samp.dll`.
-
-| Смещение (RVA) | Описание |
+| Address (RVA) | Purpose |
 |---|---|
-| `0x26EB80` | Глобальный указатель на объект чата `CChat*` |
-| `0x26EB84` | Глобальный указатель на строку ввода `CInput*` |
-| `0x673C0` | Функция прокрутки `CChat::Scroll(int)` |
-| `0x67470` | Функция отрисовки строки `CChat::RenderEntry(...)` |
-| `0x67BE0` | Функция добавления записи `CChat::AddEntry(...)` |
-| `0x67120` | Пересчет размеров шрифта `CChat::RecalcFontSize()` |
-| `0x67940` | Функция отрисовки чата `CChat::Render()` |
-| `0x887B0` | Функция прокрутки скроллбара `CDXUTScrollBar::Scroll(int)` |
+| `0x26EB80` | `CChat*` (pointer to the chat structure) |
+| `0x26EB84` | `CInput*` (pointer to the input box) |
+| `0x673C0` | `CChat::Scroll(int)` |
+| `0x67470` | `CChat::RenderEntry(...)` |
+| `0x67BE0` | `CChat::AddEntry(...)` |
+| `0x67120` | `CChat::RecalcFontSize()` |
+| `0x67940` | `CChat::Render()` |
+| `0x887B0` | `CDXUTScrollBar::Scroll(int)` |
+
+All addresses are relative (`samp.dll base + RVA`).
 
 ---
 
-## Компиляция
+## Building
 
-1. Откройте файл решения `.sln` в среде Visual Studio 2019 или 2022.
-2. Установите целевую платформу в положение **x86**.
-3. Убедитесь в наличии и корректном подключении следующих библиотек:
-   - `d3d9.lib` и `d3dx9.lib` (требуется установленный DirectX SDK).
-   - `MinHook.x86.lib`.
-4. Запустите сборку проекта в конфигурации **Release | x86**.
+1. Open the solution in Visual Studio 2019/2022.
+2. Select the **x86** platform.
+3. Make sure the following are linked:
+   - `d3d9.lib`
+   - `d3dx9.lib`
+   - `MinHook.x86.lib`
+4. Build **Release | x86**.
+5. The resulting `.asi` file will be in the output folder.
 
-### Встроенные зависимости
+### Dependencies
 
-- [MinHook](https://github.com/TsudaKageyu/minhook) — библиотека для создания хуков.
-- [nlohmann/json](https://github.com/nlohmann/json) — заголовочная библиотека для работы с JSON.
+- [MinHook](https://github.com/TsudaKageyu/minhook) — x86
+- [nlohmann/json](https://github.com/nlohmann/json) — header-only
+- DirectX SDK (for `d3dx9.lib`)
 
 ---
 
-## Формат логирования
+## Logging
 
-Плагин выводит логи в консоль или в файл в следующем формате:
+The plugin writes colored logs to the console:
 
 ```text
-[12:27:41.123] [SAMP ] AddEntry: type=4, prefix='Tupak_Rahmed', text='Привет'
-[12:27:41.130] [D3D  ] EndScene hook installed
-[12:27:41.135] [OK   ] Graphics created
-[12:27:41.140] [HOOK ] CChat::AddEntry installed
+[12:27:41.123] [12345] [SAMP ] AddEntry: type=4, prefix='Tupak_Rahmed', text='Hello'
+[12:27:41.130] [12345] [D3D  ] EndScene hook installed
+[12:27:41.135] [12345] [OK   ] Graphics created
+[12:27:41.140] [12345] [HOOK ] CChat::AddEntry installed
 ```
 
-Доступные уровни и теги: `TRACE`, `DEBUG`, `INFO`, `OK`, `WARN`, `ERROR`, `HOOK`, `D3D`, `SAMP`.
+Levels: `TRACE`, `DEBUG`, `INFO`, `OK`, `WARN`, `ERROR`, `HOOK`, `D3D`, `SAMP`.
 
 ---
 
-## Известные ограничения и особенности
+## Known limitations
 
-- Полная совместимость гарантирована только для версии R5.
-- Так как стандартная функция отрисовки чата полностью блокируется, модификации (например, некоторые CLEO-скрипты), которые пытались выводить графические элементы поверх стандартного чата, могут работать некорректно или вызывать мерцание.
-- Задний фон чата отображается исключительно при открытой строке ввода (согласно исходному дизайну).
+- Addresses are tied to SA-MP 0.3.7 R5 — other versions require an address update.
+- The native chat renderer is fully disabled — CLEO mods that draw on top
+  of the chat may conflict.
+- The chat background only appears when the input box is open (by design).
+- Duplicate messages from the server are not filtered (can be added if needed).
 
 ---
 
-## Лицензия
+## License
 
-Проект распространяется под лицензией MIT. Вы можете свободно использовать, изменять и распространять данный код.
+MIT — use, modify, and distribute freely.
+
+---
+
+## Credits
+
+- [MinHook](https://github.com/TsudaKageyu/minhook) — for the convenient hooking API
+- [nlohmann/json](https://github.com/nlohmann/json) — for the JSON parser
+- SA-MP reverse engineering community — for knowledge bases and addresses

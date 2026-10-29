@@ -19,18 +19,15 @@
     <Filter Include="dxut">
       <UniqueIdentifier>{52b51fdc-f0c4-488d-ba0b-17ccdcbd06dc}</UniqueIdentifier>
     </Filter>
+    <Filter Include="old">
+      <UniqueIdentifier>{2fb6fed6-590f-423d-87f0-ae049712e583}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dllmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\ConsoleManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\EasingsHolder.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\UtilityHelper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="third-party\imgui\imgui.cpp">
@@ -75,18 +72,39 @@
     <ClCompile Include="src\dxut\DXUTsound.cpp">
       <Filter>dxut</Filter>
     </ClCompile>
+    <ClCompile Include="src\ChatHooks.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ChatRenderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\D3DHooks.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Globals.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ChatTextParser.h">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\EasingsHolder.cpp">
+      <Filter>old</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UtilityHelper.cpp">
+      <Filter>old</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ConfigLoader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Menu.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\WndProcHook.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\Structures.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\ConsoleManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\EasingsHolder.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\UtilityHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\dxut\dxstdafx.h">
@@ -112,6 +130,54 @@
     </ClInclude>
     <ClInclude Include="src\dxut\DXUTsound.h">
       <Filter>dxut</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ScrollPhysics.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ChatBuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Logger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Globals.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ChatHooks.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\D3DHooks.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ChatRenderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\EasingsHolder.h">
+      <Filter>old</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Structures.h">
+      <Filter>old</Filter>
+    </ClInclude>
+    <ClInclude Include="src\UtilityHelper.h">
+      <Filter>old</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ScrollbarView.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\NativeDxutScrollbarView.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\nlohmann\json.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Menu.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\WndProcHook.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

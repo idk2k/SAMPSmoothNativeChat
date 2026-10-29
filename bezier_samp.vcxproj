@@ -94,7 +94,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>G:\Projects\C++ Test Projects\Testing All Things [for all]\bezier_samp\third-party;$(DXSDK_DIR)\Include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/Zc:strictStrings- %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -106,6 +106,10 @@
       <AdditionalDependencies>MinHook.x86.lib;d3d9.lib;d3dx9.lib;dsound.lib;dxguid.lib;Winmm.lib;Comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(DXSDK_DIR)\Lib\x86\;G:\Projects\C++ Test Projects\Testing All Things [for all]\bezier_samp;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy "$(TargetDir)$(TargetName).asi" "G:\GTA San Andreas - SAMP\" /Y
+</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -136,7 +140,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\ChatHooks.cpp" />
+    <ClCompile Include="src\ChatRenderer.cpp" />
+    <ClCompile Include="src\ChatTextParser.h" />
+    <ClCompile Include="src\ConfigLoader.cpp" />
     <ClCompile Include="src\ConsoleManager.cpp" />
+    <ClCompile Include="src\D3DHooks.cpp" />
     <ClCompile Include="src\dllmain.cpp" />
     <ClCompile Include="src\dxut\dxstdafx.cpp" />
     <ClCompile Include="src\dxut\DXUT.cpp" />
@@ -147,7 +156,10 @@
     <ClCompile Include="src\dxut\DXUTSettingsDlg.cpp" />
     <ClCompile Include="src\dxut\DXUTsound.cpp" />
     <ClCompile Include="src\EasingsHolder.cpp" />
+    <ClCompile Include="src\Globals.cpp" />
+    <ClCompile Include="src\Menu.cpp" />
     <ClCompile Include="src\UtilityHelper.cpp" />
+    <ClCompile Include="src\WndProcHook.cpp" />
     <ClCompile Include="third-party\imgui\imgui.cpp" />
     <ClCompile Include="third-party\imgui\imgui_draw.cpp" />
     <ClCompile Include="third-party\imgui\imgui_impl_dx9.cpp" />
@@ -156,6 +168,18 @@
     <ClCompile Include="third-party\imgui\imgui_widgets.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\ChatBuffer.h" />
+    <ClInclude Include="src\ChatHooks.h" />
+    <ClInclude Include="src\ChatRenderer.h" />
+    <ClInclude Include="src\Config.h" />
+    <ClInclude Include="src\D3DHooks.h" />
+    <ClInclude Include="src\Globals.h" />
+    <ClInclude Include="src\Logger.h" />
+    <ClInclude Include="src\Menu.h" />
+    <ClInclude Include="src\NativeDxutScrollbarView.h" />
+    <ClInclude Include="src\nlohmann\json.hpp" />
+    <ClInclude Include="src\ScrollbarView.h" />
+    <ClInclude Include="src\ScrollPhysics.h" />
     <ClInclude Include="src\ConsoleManager.h" />
     <ClInclude Include="src\dxut\dxstdafx.h" />
     <ClInclude Include="src\dxut\DXUT.h" />
@@ -168,6 +192,7 @@
     <ClInclude Include="src\EasingsHolder.h" />
     <ClInclude Include="src\Structures.h" />
     <ClInclude Include="src\UtilityHelper.h" />
+    <ClInclude Include="src\WndProcHook.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

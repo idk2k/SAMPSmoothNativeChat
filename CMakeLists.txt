@@ -70,9 +70,11 @@ if(MSVC)
     target_compile_options(BezierSAMP PRIVATE /W3 /MP /Zc:strictStrings-)
 endif()
 
-target_link_directories(BezierSAMP PRIVATE
-    "$ENV{DXSDK_DIR}/Lib/x86"
-)
+if(DXSDK_LIB_DIR)
+    target_link_directories(BezierSAMP PRIVATE "${DXSDK_LIB_DIR}")
+else()
+    target_link_directories(BezierSAMP PRIVATE "${DXSDK_DIR}/Lib/x86")
+endif()
 
 target_link_libraries(BezierSAMP PRIVATE
     minhook    

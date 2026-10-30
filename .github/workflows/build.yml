@@ -18,13 +18,14 @@ jobs:
       shell: pwsh
       run: |
         nuget install Microsoft.DXSDK.D3DX -Version 9.29.952.8 -OutputDirectory dxsdk_package
-        
-        $FullPath = (Get-Item "dxsdk_package\Microsoft.DXSDK.D3DX.9.29.952.8\build\native").FullName
-        echo "DXSDK_DIR=$FullPath" >> $env:GITHUB_ENV
+        $NativePath = (Get-Item "dxsdk_package\Microsoft.DXSDK.D3DX.9.29.952.8\build\native").FullName
+        echo "DXSDK_DIR=$NativePath" >> $env:GITHUB_ENV
+        echo "DXSDK_LIB_DIR=$NativePath\release\lib\x86" >> $env:GITHUB_ENV
+
 
     - name: Configure CMake
       run: |
-        cmake -B build -G "Visual Studio 17 2022" -A Win32 -DDXSDK_DIR="${{ env.DXSDK_DIR }}"
+        cmake -B build -G "Visual Studio 17 2022" -A Win32 -DDXSDK_DIR="${{ env.DXSDK_DIR }}" -DDXSDK_LIB_DIR="${{ env.DXSDK_LIB_DIR }}"
 
     - name: Build Project
       run: |

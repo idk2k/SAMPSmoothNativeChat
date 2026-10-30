@@ -90,7 +90,11 @@ git submodule update --init --recursive
 #### Option 1. Automated Build (Recommended for Local Development)
 A pre-configured `build.bat` script is available in the project root. It automatically creates the build directory, configures CMake for 32-bit architecture, compiles the Release version, and copies the plugin to your game folder.
 * Simply double-click **`build.bat`**.
-
+```bash
+build.bat
+# or with explicit path to gta folder
+build.bat "D:\Games\GTA San Andreas"
+```
 #### Option 2. Manual Build via Command Line (CMake CLI)
 If you want to build the project manually and optionally specify your custom GTA San Andreas installation folder without editing the source files, use the `-DGTA_DIR` flag:
 

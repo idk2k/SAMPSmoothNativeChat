@@ -14,6 +14,18 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/third-party/MinHook/CMakeLists.txt")
+    set(MINHOOK_BUILD_SAMPLES OFF CACHE BOOL "" FORCE) 
+    add_subdirectory(third-party/MinHook)
+else()
+    message(FATAL_ERROR "MinHook submodule not found! Run: git submodule update --init --recursive")
+endif()
+
+# if github actions
+if(NOT DXSDK_DIR)
+    set(DXSDK_DIR "$ENV{DXSDK_DIR}")
+endif()
+
 set(SOURCES
     src/dllmain.cpp
     src/ChatHooks.cpp
@@ -24,16 +36,6 @@ set(SOURCES
     src/Globals.cpp
     src/Menu.cpp
     src/WndProcHook.cpp
-
-#    src/dxut/dxstdafx.cpp
-#    src/dxut/DXUT.cpp
-#    src/dxut/DXUTenum.cpp
-#    src/dxut/DXUTgui.cpp
-#    src/dxut/DXUTMesh.cpp
-#    src/dxut/DXUTmisc.cpp
-#    src/dxut/DXUTSettingsDlg.cpp
-#    src/dxut/DXUTsound.cpp
-
     third-party/imgui/imgui.cpp
     third-party/imgui/imgui_draw.cpp
     third-party/imgui/imgui_impl_dx9.cpp
@@ -54,55 +56,43 @@ target_include_directories(BezierSAMP PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/third-party
     ${CMAKE_CURRENT_SOURCE_DIR}/third-party/imgui
+    ${CMAKE_CURRENT_SOURCE_DIR}/third-party/MinHook/include
     "$ENV{DXSDK_DIR}/Include"
 )
 
 target_compile_definitions(BezierSAMP PRIVATE
-    WIN32
-    _CONSOLE
-    NOMINMAX
-    _CRT_SECURE_NO_WARNINGS
-    _USE_MATH_DEFINES
+    WIN32 _CONSOLE NOMINMAX _CRT_SECURE_NO_WARNINGS _USE_MATH_DEFINES _MBCS
     $<$<CONFIG:Debug>:_DEBUG>
     $<$<CONFIG:Release>:NDEBUG>
 )
 
-# Remove unicode macro (like MultiByte Character Set из VS)
-target_compile_definitions(BezierSAMP PRIVATE 
-    _MBCS
-)
-
 if(MSVC)
-    target_compile_options(BezierSAMP PRIVATE
-        /W3
-        /MP
-        /Zc:strictStrings-
-    )
-    target_link_options(BezierSAMP PRIVATE
-        "/SUBSYSTEM:CONSOLE"
-    )
+    target_compile_options(BezierSAMP PRIVATE /W3 /MP /Zc:strictStrings-)
 endif()
 
 target_link_directories(BezierSAMP PRIVATE
     "$ENV{DXSDK_DIR}/Lib/x86"
-    "${CMAKE_CURRENT_SOURCE_DIR}" 
 )
 
 target_link_libraries(BezierSAMP PRIVATE
+    minhook    
     d3d9
     d3dx9
     dsound
     dxguid
     winmm
     comctl32
-    MinHook.x86
 )
 
 set(GTA_DIR "G:/GTA San Andreas - SAMP")
 
-add_custom_command(TARGET BezierSAMP POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "$<TARGET_FILE:BezierSAMP>"
-        "${GTA_DIR}/$<TARGET_FILE_NAME:BezierSAMP>"
-    COMMENT "Copying ASI plugin to GTA SA directory..."
-)
+if(EXISTS "${GTA_DIR}")
+    add_custom_command(TARGET BezierSAMP POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "$<TARGET_FILE:BezierSAMP>"
+            "${GTA_DIR}/$<TARGET_FILE_NAME:BezierSAMP>"
+        COMMENT "Copying ASI plugin to GTA SA directory..."
+    )
+else()
+    message(STATUS "GTA SA directory not found. Skipping automatic post-build copy.")
+endif()

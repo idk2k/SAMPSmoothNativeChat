@@ -1,0 +1,37 @@
+name: Build SmoothScrollChat Plugin
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install DirectX SDK via NuGet
+      shell: pwsh
+      run: |
+        nuget install Microsoft.DXSDK.D3DX -Version 9.29.952.8 -OutputDirectory dxsdk_package
+        
+        $FullPath = (Get-Item "dxsdk_package\Microsoft.DXSDK.D3DX.9.29.952.8\build\native").FullName
+        echo "DXSDK_DIR=$FullPath" >> $env:GITHUB_ENV
+
+    - name: Configure CMake
+      run: |
+        cmake -B build -G "Visual Studio 17 2022" -A Win32 -DDXSDK_DIR="${{ env.DXSDK_DIR }}"
+
+    - name: Build Project
+      run: |
+        cmake --build build --config Release
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: BezierSAMP-plugin
+        path: build/Release/SmoothNativeChat.asi

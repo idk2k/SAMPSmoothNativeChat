@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.21)
 
 project(SmoothNativeChat LANGUAGES CXX)
 
+set(CMAKE_WARN_DEPRECATED OFF CACHE BOOL "" FORCE)
+
 if(NOT WIN32)
     message(FATAL_ERROR "This project can only be compiled on Windows.")
 endif()
@@ -20,7 +22,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/third-party/MinHook/CMakeLists.txt")
     set(MINHOOK_BUILD_SAMPLES OFF CACHE BOOL "" FORCE) 
-    add_subdirectory(third-party/MinHook)
+    add_subdirectory(third-party/MinHook SYSTEM)
 else()
     message(FATAL_ERROR "MinHook submodule not found! Run: git submodule update --init --recursive")
 endif()
@@ -57,7 +59,7 @@ if(NOT DXSDK_DIR)
 endif()
 
 # Source files list
-file(GLOB_RECURSIVE SOURCES "src/*.cpp")
+file(GLOB_RECURSE SOURCES "src/*.cpp")
 
 add_library(${PROJECT_NAME} MODULE ${SOURCES})
 

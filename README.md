@@ -68,34 +68,63 @@ will show up, synchronized with your scroll physics.
 
 ## Building the Project
 
-### Prerequisites
-* **Operating System:** Windows
-* **Compiler:** Visual Studio 2022 (with Desktop development with C++ workload)
-* **Tools:** [CMake](https://cmake.org) version 3.21 or higher
-* **Environment:** DirectX SDK installed (the `DXSDK_DIR` environment variable must be set)
+This project is a 32-bit ASI plugin (`SmoothNativeChat.asi`) for GTA San Andreas / SAMP. It is compiled using **CMake** targeting the **Win32 (x86)** architecture.
 
-### Automated Build
-A `build.bat` script is provided in the project root. To build the plugin in `Release` configuration (32-bit) and automatically copy it to the game directory, simply run:
+### 📌 Prerequisites & Important Notes
+1. **Dependencies (Submodules):** The project relies on `MinHook` and `ImGui` managed via Git submodules.
+2. **DirectX SDK:** You must have the DirectX SDK (June 2010) installed, and your `DXSDK_DIR` environment variable must point to it.
+3. **Game Directory Path (Auto-Copy):** By default, the project compiles and copies the output directly into the game folder specified in `CMakeLists.txt` (`G:/GTA San Andreas - SAMP`). If your game path is different, you can either edit the file or override it dynamically during compilation (see the Manual Build section below).
+
+---
+
+### 📦 Repository Initialization (Critical Step)
+Right after cloning the repository, you must initialize and download all required submodules:
 ```bash
-build.bat
+git submodule update --init --recursive
 ```
 
-### Manual Build via Command Line
-To build the project manually, execute the following commands in the project root directory:
+---
+
+### 🚀 Build Options
+
+#### Option 1. Automated Build (Recommended for Local Development)
+A pre-configured `build.bat` script is available in the project root. It automatically creates the build directory, configures CMake for 32-bit architecture, compiles the Release version, and copies the plugin to your game folder.
+* Simply double-click **`build.bat`**.
+
+#### Option 2. Manual Build via Command Line (CMake CLI)
+If you want to build the project manually and optionally specify your custom GTA San Andreas installation folder without editing the source files, use the `-DGTA_DIR` flag:
 
 ```bash
 mkdir build && cd build
-cmake -G "Visual Studio 17 2022" -A Win32 ..
+
+# 2. Configure the project for Win32 (x86) and specify your custom GTA path
+# (If you omit -DGTA_DIR, the default path from CMakeLists.txt will be used)
+cmake -G "Visual Studio 17 2022" -A Win32 -DGTA_DIR="C:/Games/GTA San Andreas" ..
+
 cmake --build . --config Release
 ```
 
-Upon a successful build, the compiled `.asi` plugin will be automatically copied to the game directory specified in your `CMakeLists.txt`.
+#### Option 3. Via Visual Studio Code Interface
+1. Open the project folder in VS Code.
+2. Press `Ctrl + Shift + P` and select **`CMake: Select a Kit`**.
+3. Make sure to choose the 32-bit compiler: **`Visual Studio Community 2022 Release - x86`**.
+4. Click the **`Build`** button on the VS Code status bar.
+
+#### Option 4. Via Visual Studio 2022
+1. Open solution or project file and just build it.
+
+#### Option 5. Automated Cloud Build (GitHub Actions)
+The repository includes a fully automated CI/CD pipeline. Cloud compilation on GitHub servers is triggered in two scenarios:
+1. When you publish a new **Release** in the GitHub Releases tab.
+2. When you trigger it manually by clicking the **`Run workflow`** button in the **Actions** tab.
+
+*Note for GitHub Actions:* The cloud build does not require any local environment setup or a valid `GTA_DIR`. It automatically provisions the DirectX SDK via NuGet, builds the project from submodules, and attaches the compiled `SmoothNativeChat.asi` file straight to the workflow artifacts or the newly created release.
 
 ---
 
 ## Configuration
 
-All parameters are configured in `config.json` next to the `.asi` file:
+All parameters are configured in `smooth_chat_config.json` next to the `.asi` file:
 
 ```json
 {

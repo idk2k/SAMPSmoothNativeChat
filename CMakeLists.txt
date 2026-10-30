@@ -110,7 +110,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     comctl32
 )
 
-set(GTA_DIR "G:/GTA San Andreas - SAMP")
+set(GTA_DIR "G:/GTA San Andreas - SAMP" CACHE PATH "Path to GTA San Andreas directory")
 
 if(EXISTS "${GTA_DIR}")
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD

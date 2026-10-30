@@ -94,7 +94,7 @@ auto WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved) -> BOOL {
         if (last_slash != std::string::npos) {
             config_path = config_path.substr(0, last_slash + 1);
         }
-        config_path += "config.json";
+        config_path += "smooth_chat_config.json";
 
         LoadConfig(config_path);
 

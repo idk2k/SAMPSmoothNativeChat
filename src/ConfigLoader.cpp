@@ -130,3 +130,51 @@ static void LogLoadedConfig() {
 
     Logger::Info("---- End of config ----");
 }
+
+bool SaveConfig(const std::string& path) {
+    try {
+        json j;
+
+        // chat
+        j["chat"]["x"] = g_config.chat.x;
+        j["chat"]["y"] = g_config.chat.y;
+        j["chat"]["width"] = g_config.chat.width;
+        j["chat"]["height"] = g_config.chat.height;
+        j["chat"]["line_height"] = g_config.chat.line_height;
+        j["chat"]["font_size"] = g_config.chat.font_size;
+        j["chat"]["max_messages"] = g_config.chat.max_messages;
+
+        // scroll
+        j["scroll"]["lines_per_click"] = g_config.scroll.lines_per_click;
+        j["scroll"]["stiffness"] = g_config.scroll.stiffness;
+        j["scroll"]["friction"] = g_config.scroll.friction;
+
+        // timestamps
+        j["timestamps"]["enabled"] = g_config.timestamps.enabled;
+
+        // background
+        j["background"]["enabled"] = g_config.background.enabled;
+        j["background"]["top_alpha"] = g_config.background.top_alpha;
+        j["background"]["bottom_alpha"] = g_config.background.bottom_alpha;
+
+        // scrollbar
+        j["scrollbar"]["enabled"] = g_config.scrollbar.enabled;
+
+        // log
+        j["log"]["level"] = g_config.log.level;
+
+        std::ofstream file(path);
+        if (!file.is_open()) {
+            Logger::Error("Failed to open config file for writing: " + path);
+            return false;
+        }
+
+        file << j.dump(4);
+
+        Logger::Ok("Config saved: " + path);
+        return true;
+    } catch (const std::exception& e) {
+        Logger::Error(std::string("Config save error: ") + e.what());
+        return false;
+    }
+}

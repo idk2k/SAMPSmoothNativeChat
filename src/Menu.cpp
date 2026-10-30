@@ -95,6 +95,22 @@ void menu::Render(IDirect3DDevice9* device) {
             ImGui::Text("Scroll position: %.1f", g_scroll.position);
             ImGui::Text("Scroll target: %.1f", g_scroll.target);
         }
+
+        // -------------------------------------------------------------
+        // Подвал окна с кнопкой сохранения
+        // -------------------------------------------------------------
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+
+        if (ImGui::Button("Save Settings", ImVec2(-1, 30))) {
+            if (SaveConfig("smooth_chat_config.json")) {
+                Logger::Debug("Configuration successfully saved!");
+            }
+            else {
+                Logger::Error("Failed to save configuration.");
+            }
+        }
     }
     ImGui::End();
 }

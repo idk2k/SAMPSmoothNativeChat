@@ -49,3 +49,4 @@ struct Config {
 extern Config g_config;
 
 bool LoadConfig(const std::string& path);
+bool SaveConfig(const std::string& path);

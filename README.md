@@ -66,6 +66,33 @@ will show up, synchronized with your scroll physics.
 
 ---
 
+## Building the Project
+
+### Prerequisites
+* **Operating System:** Windows
+* **Compiler:** Visual Studio 2022 (with Desktop development with C++ workload)
+* **Tools:** [CMake](https://cmake.org) version 3.21 or higher
+* **Environment:** DirectX SDK installed (the `DXSDK_DIR` environment variable must be set)
+
+### Automated Build
+A `build.bat` script is provided in the project root. To build the plugin in `Release` configuration (32-bit) and automatically copy it to the game directory, simply run:
+```bash
+build.bat
+```
+
+### Manual Build via Command Line
+To build the project manually, execute the following commands in the project root directory:
+
+```bash
+mkdir build && cd build
+cmake -G "Visual Studio 17 2022" -A Win32 ..
+cmake --build . --config Release
+```
+
+Upon a successful build, the compiled `.asi` plugin will be automatically copied to the game directory specified in your `CMakeLists.txt`.
+
+---
+
 ## Configuration
 
 All parameters are configured in `config.json` next to the `.asi` file:

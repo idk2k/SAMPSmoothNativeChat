@@ -5,7 +5,7 @@
 
 #include <Windows.h>
 #include <process.h>
-#include <MinHook/MinHook.h>
+#include <MinHook.h>
 
 #include "Globals.h"
 #include "Logger.h"
@@ -93,7 +93,7 @@ auto WINAPI DllMain(
 
         Logger::Init();
 
-        // Путь к config.json рядом с .asi.
+        // пїЅпїЅпїЅпїЅ пїЅ config.json пїЅпїЅпїЅпїЅпїЅ пїЅ .asi.
         char module_path[MAX_PATH]{};
         GetModuleFileNameA(instance, module_path, MAX_PATH);
 

@@ -5,11 +5,11 @@
 #include "Logger.h"
 #include "Menu.h"
 #include "WndProcHook.h"
-#include <MinHook/MinHook.h>
+#include <MinHook.h>
 #include <Windows.h>
-#include <imgui/imgui.h>
-#include <imgui/imgui_impl_dx9.h>
-#include <imgui/imgui_impl_win32.h>
+#include <imgui.h>
+#include <imgui_impl_dx9.h>
+#include <imgui_impl_win32.h>
 #include <string>
 
 // ---------------------------------------------------------------------------
@@ -32,7 +32,7 @@ static HRESULT __stdcall EndSceneHooked(IDirect3DDevice9* device) {
         CreateGraphics(device);
     }
 
-    // Однократная инициализация ImGui.
+    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ ImGui.
     if (!g_imgui_ready) {
         menu::Init(device);
         InstallWndProcHook();
@@ -44,19 +44,19 @@ static HRESULT __stdcall EndSceneHooked(IDirect3DDevice9* device) {
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 
-    // В начале Present, после ImGui::NewFrame():
+    // пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ Present, пїЅпїЅпїЅпїЅпїЅ ImGui::NewFrame():
     if (g_menu_open) {
         if (!g_cursor_shown) {
             g_cursor_shown = true;
             ToggleCursor(true);
         }
-        // ... отрисовка меню ...
+        // ... пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ ...
     } else if (g_cursor_shown) {
         g_cursor_shown = false;
         ToggleCursor(false);
     }
 
-    // --- Наш чат (под меню) ---
+    // --- пїЅпїЅпїЅ пїЅпїЅпїЅ (пїЅпїЅпїЅ пїЅпїЅпїЅпїЅ) ---
     RECT clip;
     clip.left = g_config.chat.x;
     clip.top = g_config.chat.y;
@@ -74,7 +74,7 @@ static HRESULT __stdcall EndSceneHooked(IDirect3DDevice9* device) {
 
     device->SetRenderState(D3DRS_SCISSORTESTENABLE, old_scissor);
 
-    // --- Меню ImGui (поверх чата) ---
+    // --- пїЅпїЅпїЅпїЅ ImGui (пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ) ---
     menu::Render(device);
 
     ImGui::EndFrame();
@@ -110,7 +110,7 @@ static HRESULT __stdcall ResetHooked(IDirect3DDevice9* device, D3DPRESENT_PARAME
 }
 
 // ---------------------------------------------------------------------------
-// Установка D3D-хуков.
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ D3D-пїЅпїЅпїЅпїЅпїЅ.
 // ---------------------------------------------------------------------------
 
 static bool CreateAndEnableHook(const char* name, void* target, void* detour, void** original) {
@@ -149,13 +149,13 @@ bool InstallD3DHooks() {
         return false;
     }
 
-    // EndScene — vtable index 42.
+    // EndScene пїЅ vtable index 42.
     if (!CreateAndEnableHook("IDirect3DDevice9::EndScene", vtable[42], &EndSceneHooked,
                              reinterpret_cast<void**>(&fp_end_scene))) {
         return false;
     }
 
-    // Reset — vtable index 16.
+    // Reset пїЅ vtable index 16.
     CreateAndEnableHook("IDirect3DDevice9::Reset", vtable[16], &ResetHooked, reinterpret_cast<void**>(&fp_reset));
 
     return true;

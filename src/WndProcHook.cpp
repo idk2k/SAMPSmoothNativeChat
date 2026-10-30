@@ -2,17 +2,17 @@
 #include "Globals.h"
 #include "Logger.h"
 #include <Windows.h>
-#include <imgui/imgui.h>
-#include <imgui/imgui_impl_win32.h>
+#include <imgui.h>
+#include <imgui_impl_win32.h>
 
 // SA-MP R5 Addresses
 static constexpr uintptr_t kGamePtrOffset = 0x26EBAC;
 static constexpr uintptr_t kSetCursorMode = 0xA06F0;
 static constexpr uintptr_t kUnlockActorCam = 0xA05D0;
 
-// Родной переключатель курсора SA-MP.
-// state = true  -> курсорный режим (камера не крутится мышью)
-// state = false -> обычный режим (камера управляется мышью)
+// пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ SA-MP.
+// state = true  -> пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ)
+// state = false -> пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ)
 void ToggleCursor(bool state) {
     void* game = *reinterpret_cast<void**>(g_samp_base + kGamePtrOffset);
 
@@ -37,7 +37,7 @@ extern bool g_menu_open;
 bool g_cursor_shown;
 
 static LRESULT __stdcall HookedWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-    // Пока меню открыто — ввод уходит только в ImGui.
+    // пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ ImGui.
     if (g_menu_open) {
         ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
         return TRUE;
@@ -48,7 +48,7 @@ static LRESULT __stdcall HookedWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARA
         return true;
     }
 
-    // Меню закрыто — SA-MP сам управляет курсором и камерой.
+    // пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ SA-MP пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
     return CallWindowProcA(g_original_wndproc, hWnd, msg, wParam, lParam);
 }
 

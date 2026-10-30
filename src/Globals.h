@@ -20,20 +20,20 @@ struct SampAddresses {
     uintptr_t chat_move_scrollbar = 0;
 };
 
-// Глобальное состояние плагина.
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
 extern SampAddresses g_addresses;
 extern uintptr_t g_samp_base;
 extern bool g_shutdown;
 extern bool g_chat_hooks_installed;
 
-// DirectX-объекты.
+// DirectX-пїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
 extern IDirect3DDevice9* g_device;
 extern ID3DXFont* g_font;
 extern ID3DXSprite* g_sprite;
 extern IDirect3DTexture9* g_bg_texture;
 extern bool g_graphics_ready;
 
-// Собственный чат.
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ.
 extern ChatBuffer g_chat_buffer;
 extern ScrollPhysics g_scroll;
 

@@ -3,9 +3,9 @@
 #include "Config.h"
 #include "Globals.h"
 #include "Logger.h"
-#include <imgui/imgui.h>
-#include <imgui/imgui_impl_dx9.h>
-#include <imgui/imgui_impl_win32.h>
+#include <imgui.h>
+#include <imgui_impl_dx9.h>
+#include <imgui_impl_win32.h>
 #include <string>
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -19,12 +19,12 @@ void menu::Init(IDirect3DDevice9* device) {
 
     ImGui::CreateContext();
 
-    // HWND окна игры.
+    // HWND пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ.
     HWND game_window = **reinterpret_cast<HWND**>(0xC17054);
     ImGui_ImplWin32_Init(game_window);
     ImGui_ImplDX9_Init(device);
 
-    // Шрифт с поддержкой кириллицы.
+    // пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
     char windows_dir[MAX_PATH]{};
     GetEnvironmentVariableA("WINDIR", windows_dir, MAX_PATH);
 
@@ -65,7 +65,7 @@ void menu::Render(IDirect3DDevice9* device) {
             }
 
             if (graphics_changed && device) {
-                // Пересоздаём фоновую текстуру под новый размер.
+                // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ.
                 ReleaseGraphics();
                 CreateGraphics(device);
                 Logger::D3D("Graphics recreated (size changed)");
@@ -82,7 +82,7 @@ void menu::Render(IDirect3DDevice9* device) {
 
             ImGui::SliderFloat("Friction", &g_config.scroll.friction, 5.0f, 80.0f, "%.0f");
 
-            // Синхронизируем физику с конфигом.
+            // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
             g_scroll.stiffness = g_config.scroll.stiffness;
             g_scroll.friction = g_config.scroll.friction;
         }
@@ -97,7 +97,7 @@ void menu::Render(IDirect3DDevice9* device) {
         }
 
         // -------------------------------------------------------------
-        // Подвал окна с кнопкой сохранения
+        // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         // -------------------------------------------------------------
         ImGui::Spacing();
         ImGui::Separator();

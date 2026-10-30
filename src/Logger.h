@@ -13,18 +13,18 @@
 #include <cstdint>
 
 // ---------------------------------------------------------------------------
-// Цветной логгер для консоли Windows.
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ Windows.
 //
-// Уровни:
-//   TRACE  — серый, максимально подробный
-//   DEBUG  — голубой, отладочная информация
-//   INFO   — белый, обычные события
-//   OK     — зелёный, успешные операции
-//   WARN   — жёлтый, предупреждения
-//   ERROR  — красный, ошибки
-//   HOOK   — пурпурный, установка/снятие хуков
-//   D3D    — голубой, DirectX-события
-//   SAMP   — жёлтый, события SA-MP
+// пїЅпїЅпїЅпїЅпїЅпїЅ:
+//   TRACE  пїЅ пїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+//   DEBUG  пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+//   INFO   пїЅ пїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+//   OK     пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+//   WARN   пїЅ пїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+//   ERROR  пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅ
+//   HOOK   пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ/пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+//   D3D    пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, DirectX-пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+//   SAMP   пїЅ пїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅ SA-MP
 // ---------------------------------------------------------------------------
 
 class Logger {
@@ -42,7 +42,7 @@ public:
     };
 
     static void Init() {
-        // Включаем ANSI escape-последовательности в консоли.
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ ANSI escape-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
         HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
 
         DWORD mode = 0;
@@ -51,7 +51,7 @@ public:
                 mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
         }
 
-        // Включаем UTF-8 вывод (для кириллицы в консоли).
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ UTF-8 пїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ).
         SetConsoleOutputCP(CP_UTF8);
         SetConsoleCP(CP_UTF8);
     }
@@ -66,7 +66,7 @@ public:
     static void D3D(const std::string& text) { Write(Level::D3D, text); }
     static void SAMP(const std::string& text) { Write(Level::SAMP, text); }
 
-    // Указатель в hex.
+    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ hex.
     static void Pointer(const std::string& name, uintptr_t value) {
         std::ostringstream stream;
         stream << name << " = 0x"
@@ -74,7 +74,7 @@ public:
         Info(stream.str());
     }
 
-    // HRESULT-результат.
+    // HRESULT-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
     static void HResult(const std::string& name, HRESULT result) {
         if (SUCCEEDED(result)) {
             Ok(name + " succeeded (0x" + ToHex(static_cast<uint32_t>(result)) + ")");
@@ -84,7 +84,7 @@ public:
         }
     }
 
-    // MH_STATUS-результат.
+    // MH_STATUS-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
     static void MhStatus(const std::string& name, int status) {
         if (status == 0) { // MH_OK
             Ok(name + " succeeded (MH_OK)");
@@ -94,7 +94,7 @@ public:
         }
     }
 
-    // Hex-дамп памяти (для отладки патчей/структур).
+    // Hex-пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ/пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ).
     static void HexDump(const std::string& name,
         const void* data,
         size_t size)
@@ -142,15 +142,15 @@ private:
 
     static const char* LevelColor(Level level) {
         switch (level) {
-        case Level::Trace: return "\x1B[90m"; // серый
-        case Level::Debug: return "\x1B[96m"; // голубой
-        case Level::Info:  return "\x1B[97m"; // белый
-        case Level::Ok:    return "\x1B[92m"; // зелёный
-        case Level::Warn:  return "\x1B[93m"; // жёлтый
-        case Level::Error: return "\x1B[91m"; // красный
-        case Level::Hook:  return "\x1B[95m"; // пурпурный
-        case Level::D3D:   return "\x1B[94m"; // синий
-        case Level::SAMP:  return "\x1B[93m"; // жёлтый
+        case Level::Trace: return "\x1B[90m"; // пїЅпїЅпїЅпїЅпїЅ
+        case Level::Debug: return "\x1B[96m"; // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+        case Level::Info:  return "\x1B[97m"; // пїЅпїЅпїЅпїЅпїЅ
+        case Level::Ok:    return "\x1B[92m"; // пїЅпїЅпїЅпїЅпїЅпїЅ
+        case Level::Warn:  return "\x1B[93m"; // пїЅпїЅпїЅпїЅпїЅ
+        case Level::Error: return "\x1B[91m"; // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+        case Level::Hook:  return "\x1B[95m"; // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+        case Level::D3D:   return "\x1B[94m"; // пїЅпїЅпїЅпїЅпїЅ
+        case Level::SAMP:  return "\x1B[93m"; // пїЅпїЅпїЅпїЅпїЅ
         }
         return "\x1B[97m";
     }

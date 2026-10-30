@@ -14,6 +14,10 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+#
+#   MinHook (submodule)
+#
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/third-party/MinHook/CMakeLists.txt")
     set(MINHOOK_BUILD_SAMPLES OFF CACHE BOOL "" FORCE) 
     add_subdirectory(third-party/MinHook)
@@ -21,7 +25,33 @@ else()
     message(FATAL_ERROR "MinHook submodule not found! Run: git submodule update --init --recursive")
 endif()
 
-# if github actions
+#
+# ImGui (submodule)
+#
+
+set(IMGUI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third-party/imgui")
+
+if(EXISTS "${IMGUI_DIR}/imgui.cpp")
+    set(IMGUI_SOURCES
+        "${IMGUI_DIR}/imgui.cpp"
+        "${IMGUI_DIR}/imgui_draw.cpp"
+        "${IMGUI_DIR}/imgui_tables.cpp"
+        "${IMGUI_DIR}/imgui_widgets.cpp"
+        "${IMGUI_DIR}/backends/imgui_impl_dx9.cpp"
+        "${IMGUI_DIR}/backends/imgui_impl_win32.cpp"
+    )
+    
+    add_library(imgui STATIC ${IMGUI_SOURCES})
+    
+    target_include_directories(imgui PUBLIC 
+        ${IMGUI_DIR}
+        ${IMGUI_DIR}/backends
+    )
+else()
+    message(FATAL_ERROR "ImGui submodule not found! Run: git submodule update --init --recursive")
+endif()
+
+# github actions path hot-fix (becase actions uses nuget d3d9 package)
 if(NOT DXSDK_DIR)
     set(DXSDK_DIR "$ENV{DXSDK_DIR}")
 endif()
@@ -36,12 +66,6 @@ set(SOURCES
     src/Globals.cpp
     src/Menu.cpp
     src/WndProcHook.cpp
-    third-party/imgui/imgui.cpp
-    third-party/imgui/imgui_draw.cpp
-    third-party/imgui/imgui_impl_dx9.cpp
-    third-party/imgui/imgui_impl_win32.cpp
-    third-party/imgui/imgui_tables.cpp
-    third-party/imgui/imgui_widgets.cpp
 )
 
 add_library(${PROJECT_NAME} MODULE ${SOURCES})
@@ -55,8 +79,6 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/third-party
-    ${CMAKE_CURRENT_SOURCE_DIR}/third-party/imgui
-    ${CMAKE_CURRENT_SOURCE_DIR}/third-party/MinHook/include
     "$ENV{DXSDK_DIR}/Include"
 )
 
@@ -70,6 +92,7 @@ if(MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE /W3 /MP /Zc:strictStrings-)
 endif()
 
+# DirectX library paths, depends on environment: local or actions (NuGet package)
 if(DXSDK_LIB_DIR)
     target_link_directories(${PROJECT_NAME} PRIVATE "${DXSDK_LIB_DIR}")
 else()
@@ -77,7 +100,8 @@ else()
 endif()
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
-    minhook    
+    minhook
+    imgui    
     d3d9
     d3dx9
     dsound

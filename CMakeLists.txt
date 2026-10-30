@@ -56,17 +56,8 @@ if(NOT DXSDK_DIR)
     set(DXSDK_DIR "$ENV{DXSDK_DIR}")
 endif()
 
-set(SOURCES
-    src/dllmain.cpp
-    src/ChatHooks.cpp
-    src/ChatRenderer.cpp
-    src/ConfigLoader.cpp
-    src/ConsoleManager.cpp
-    src/D3DHooks.cpp
-    src/Globals.cpp
-    src/Menu.cpp
-    src/WndProcHook.cpp
-)
+# Source files list
+file(GLOB_RECURSIVE SOURCES "src/*.cpp")
 
 add_library(${PROJECT_NAME} MODULE ${SOURCES})
 

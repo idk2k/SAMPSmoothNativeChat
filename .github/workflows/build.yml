@@ -4,6 +4,9 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: windows-2022
@@ -36,3 +39,11 @@ jobs:
       with:
         name: BezierSAMP-plugin
         path: build/Release/SmoothNativeChat.asi
+
+    - name: Upload ASI to GitHub Release
+      if: github.event_name == 'release'
+      uses: softprops/action-gh-release@v2
+      with:
+        files: build/Release/SmoothNativeChat.asi
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

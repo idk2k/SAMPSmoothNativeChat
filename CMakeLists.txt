@@ -2,30 +2,37 @@ cmake_minimum_required(VERSION 3.21)
 
 project(BezierSAMP LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 20)
+if(NOT WIN32)
+    message(FATAL_ERROR "This project can only be compiled on Windows.")
+endif()
+
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    message(FATAL_ERROR "Build only with Win32/x86 toolchain. SAMP/GTA SA is a 32-bit application. Please use -A Win32")
+endif()
+
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-if(NOT CMAKE_SIZEOF_VOID_P EQUAL 4)
-    message(FATAL_ERROR
-        "Build only with Win32/x86 toolchain. SAMP is a 32-bit application."
-    )
-endif()
-
 set(SOURCES
     src/dllmain.cpp
+    src/ChatHooks.cpp
+    src/ChatRenderer.cpp
+    src/ConfigLoader.cpp
     src/ConsoleManager.cpp
-    src/EasingsHolder.cpp
-    src/UtilityHelper.cpp
+    src/D3DHooks.cpp
+    src/Globals.cpp
+    src/Menu.cpp
+    src/WndProcHook.cpp
 
-    src/dxut/dxstdafx.cpp
-    src/dxut/DXUT.cpp
-    src/dxut/DXUTenum.cpp
-    src/dxut/DXUTgui.cpp
-    src/dxut/DXUTMesh.cpp
-    src/dxut/DXUTmisc.cpp
-    src/dxut/DXUTSettingsDlg.cpp
-    src/dxut/DXUTsound.cpp
+#    src/dxut/dxstdafx.cpp
+#    src/dxut/DXUT.cpp
+#    src/dxut/DXUTenum.cpp
+#    src/dxut/DXUTgui.cpp
+#    src/dxut/DXUTMesh.cpp
+#    src/dxut/DXUTmisc.cpp
+#    src/dxut/DXUTSettingsDlg.cpp
+#    src/dxut/DXUTsound.cpp
 
     third-party/imgui/imgui.cpp
     third-party/imgui/imgui_draw.cpp
@@ -44,14 +51,15 @@ set_target_properties(BezierSAMP PROPERTIES
 )
 
 target_include_directories(BezierSAMP PRIVATE
-    src
-    third-party
-    third-party/imgui
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/third-party
+    ${CMAKE_CURRENT_SOURCE_DIR}/third-party/imgui
     "$ENV{DXSDK_DIR}/Include"
 )
 
 target_compile_definitions(BezierSAMP PRIVATE
     WIN32
+    _CONSOLE
     NOMINMAX
     _CRT_SECURE_NO_WARNINGS
     _USE_MATH_DEFINES
@@ -59,22 +67,25 @@ target_compile_definitions(BezierSAMP PRIVATE
     $<$<CONFIG:Release>:NDEBUG>
 )
 
+# Remove unicode macro (like MultiByte Character Set из VS)
+target_compile_definitions(BezierSAMP PRIVATE 
+    _MBCS
+)
+
 if(MSVC)
     target_compile_options(BezierSAMP PRIVATE
         /W3
         /MP
         /Zc:strictStrings-
-        /utf-8
     )
-
     target_link_options(BezierSAMP PRIVATE
-        "/SUBSYSTEM:WINDOWS"
+        "/SUBSYSTEM:CONSOLE"
     )
 endif()
 
 target_link_directories(BezierSAMP PRIVATE
     "$ENV{DXSDK_DIR}/Lib/x86"
-    "${CMAKE_CURRENT_SOURCE_DIR}/third-party/MinHook/lib"
+    "${CMAKE_CURRENT_SOURCE_DIR}" 
 )
 
 target_link_libraries(BezierSAMP PRIVATE
@@ -85,4 +96,13 @@ target_link_libraries(BezierSAMP PRIVATE
     winmm
     comctl32
     MinHook.x86
+)
+
+set(GTA_DIR "G:/GTA San Andreas - SAMP")
+
+add_custom_command(TARGET BezierSAMP POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "$<TARGET_FILE:BezierSAMP>"
+        "${GTA_DIR}/$<TARGET_FILE_NAME:BezierSAMP>"
+    COMMENT "Copying ASI plugin to GTA SA directory..."
 )

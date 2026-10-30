@@ -20,6 +20,7 @@ data/**/*.exe
 *.userprefs
 
 # Build results
+build/
 [Dd]ebug/
 [Dd]ebugPublic/
 [Rr]elease/

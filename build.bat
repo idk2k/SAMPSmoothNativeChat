@@ -6,7 +6,7 @@ set BUILD_DIR=build
 set CONFIG=Release
 
 echo ===============================================
-echo  Building BezierSAMP using CMake (Win32 x86)
+echo  Building SmoothNativeChat using CMake (Win32 x86)
 echo ===============================================
 
 if not exist %BUILD_DIR% (

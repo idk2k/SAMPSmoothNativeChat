@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(BezierSAMP LANGUAGES CXX)
+project(SmoothNativeChat LANGUAGES CXX)
 
 if(NOT WIN32)
     message(FATAL_ERROR "This project can only be compiled on Windows.")
@@ -44,15 +44,15 @@ set(SOURCES
     third-party/imgui/imgui_widgets.cpp
 )
 
-add_library(BezierSAMP MODULE ${SOURCES})
+add_library(${PROJECT_NAME} MODULE ${SOURCES})
 
-set_target_properties(BezierSAMP PROPERTIES
-    OUTPUT_NAME "BezierSAMP"
+set_target_properties(${PROJECT_NAME} PROPERTIES
+    OUTPUT_NAME ${PROJECT_NAME}
     SUFFIX ".asi"
     PREFIX ""
 )
 
-target_include_directories(BezierSAMP PRIVATE
+target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/third-party
     ${CMAKE_CURRENT_SOURCE_DIR}/third-party/imgui
@@ -60,23 +60,23 @@ target_include_directories(BezierSAMP PRIVATE
     "$ENV{DXSDK_DIR}/Include"
 )
 
-target_compile_definitions(BezierSAMP PRIVATE
+target_compile_definitions(${PROJECT_NAME} PRIVATE
     WIN32 _CONSOLE NOMINMAX _CRT_SECURE_NO_WARNINGS _USE_MATH_DEFINES _MBCS
     $<$<CONFIG:Debug>:_DEBUG>
     $<$<CONFIG:Release>:NDEBUG>
 )
 
 if(MSVC)
-    target_compile_options(BezierSAMP PRIVATE /W3 /MP /Zc:strictStrings-)
+    target_compile_options(${PROJECT_NAME} PRIVATE /W3 /MP /Zc:strictStrings-)
 endif()
 
 if(DXSDK_LIB_DIR)
-    target_link_directories(BezierSAMP PRIVATE "${DXSDK_LIB_DIR}")
+    target_link_directories(${PROJECT_NAME} PRIVATE "${DXSDK_LIB_DIR}")
 else()
-    target_link_directories(BezierSAMP PRIVATE "${DXSDK_DIR}/Lib/x86")
+    target_link_directories(${PROJECT_NAME} PRIVATE "${DXSDK_DIR}/Lib/x86")
 endif()
 
-target_link_libraries(BezierSAMP PRIVATE
+target_link_libraries(${PROJECT_NAME} PRIVATE
     minhook    
     d3d9
     d3dx9
@@ -89,10 +89,10 @@ target_link_libraries(BezierSAMP PRIVATE
 set(GTA_DIR "G:/GTA San Andreas - SAMP")
 
 if(EXISTS "${GTA_DIR}")
-    add_custom_command(TARGET BezierSAMP POST_BUILD
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "$<TARGET_FILE:BezierSAMP>"
-            "${GTA_DIR}/$<TARGET_FILE_NAME:BezierSAMP>"
+            "$<TARGET_FILE:${PROJECT_NAME}>"
+            "${GTA_DIR}/$<TARGET_FILE_NAME:${PROJECT_NAME}>"
         COMMENT "Copying ASI plugin to GTA SA directory..."
     )
 else()

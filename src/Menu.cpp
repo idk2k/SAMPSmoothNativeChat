@@ -1,17 +1,14 @@
 #include "Menu.h"
-#include "Globals.h"
-#include "Config.h"
-#include "Logger.h"
 #include "ChatRenderer.h"
-
+#include "Config.h"
+#include "Globals.h"
+#include "Logger.h"
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_dx9.h>
 #include <imgui/imgui_impl_win32.h>
-
 #include <string>
 
-extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(
-    HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 static bool g_imgui_initialized = false;
 
@@ -34,27 +31,18 @@ void menu::Init(IDirect3DDevice9* device) {
     std::string font_path = std::string(windows_dir) + "\\Fonts\\Tahoma.TTF";
 
     ImGuiIO& io = ImGui::GetIO();
-    io.Fonts->AddFontFromFileTTF(
-        font_path.c_str(),
-        16.0f,
-        nullptr,
-        io.Fonts->GetGlyphRangesCyrillic());
+    io.Fonts->AddFontFromFileTTF(font_path.c_str(), 16.0f, nullptr, io.Fonts->GetGlyphRangesCyrillic());
 
     g_imgui_initialized = true;
     Logger::Ok("ImGui initialized");
 }
 
-bool menu::IsInitialized() {
-    return g_imgui_initialized;
-}
+bool menu::IsInitialized() { return g_imgui_initialized; }
 
 void menu::Render(IDirect3DDevice9* device) {
     if (!g_imgui_initialized || !g_menu_open) {
         return;
     }
-
-    // Показываем курсор, пока меню открыто.
-    // (Управление курсором игры уже обрабатывается в WndProcHook.)
 
     ImGui::SetNextWindowSize(ImVec2(420, 320), ImGuiCond_FirstUseEver);
 
@@ -72,8 +60,7 @@ void menu::Render(IDirect3DDevice9* device) {
             ImGui::SliderInt("Width", &g_config.chat.width, 200, 1200);
             ImGui::SliderInt("Height", &g_config.chat.height, 60, 500);
 
-            if (g_config.chat.width != old_width ||
-                g_config.chat.height != old_height) {
+            if (g_config.chat.width != old_width || g_config.chat.height != old_height) {
                 graphics_changed = true;
             }
 
@@ -89,14 +76,11 @@ void menu::Render(IDirect3DDevice9* device) {
         // Scroll
         // -------------------------------------------------------------
         if (ImGui::CollapsingHeader("Scroll", ImGuiTreeNodeFlags_DefaultOpen)) {
-            ImGui::SliderFloat("Lines per click",
-                &g_config.scroll.lines_per_click, 0.5f, 10.0f, "%.1f");
+            ImGui::SliderFloat("Lines per click", &g_config.scroll.lines_per_click, 0.5f, 10.0f, "%.1f");
 
-            ImGui::SliderFloat("Stiffness",
-                &g_config.scroll.stiffness, 50.0f, 600.0f, "%.0f");
+            ImGui::SliderFloat("Stiffness", &g_config.scroll.stiffness, 50.0f, 600.0f, "%.0f");
 
-            ImGui::SliderFloat("Friction",
-                &g_config.scroll.friction, 5.0f, 80.0f, "%.0f");
+            ImGui::SliderFloat("Friction", &g_config.scroll.friction, 5.0f, 80.0f, "%.0f");
 
             // Синхронизируем физику с конфигом.
             g_scroll.stiffness = g_config.scroll.stiffness;

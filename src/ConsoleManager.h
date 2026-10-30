@@ -9,4 +9,4 @@ public:
     [[nodiscard]] BOOL create_console();
 };
 
-#endif  // CONSOLE_MANAGER_H
+#endif // CONSOLE_MANAGER_H

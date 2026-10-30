@@ -1,9 +1,8 @@
 #include "Config.h"
 #include "Logger.h"
-
 #include "nlohmann/json.hpp"
-#include <fstream>
 #include <Windows.h>
+#include <fstream>
 
 using json = nlohmann::json;
 
@@ -11,25 +10,18 @@ Config g_config;
 
 // Парсит "#RRGGBB" или "AARRGGBB" в D3DCOLOR.
 static D3DCOLOR ParseColor(const std::string& hex, D3DCOLOR fallback) {
-    if (hex.size() != 7 && hex.size() != 9) return fallback;
+    if (hex.size() != 7 && hex.size() != 9)
+        return fallback;
 
-    auto to_byte = [](const std::string& s, size_t pos) -> int {
-        return std::stoi(s.substr(pos, 2), nullptr, 16);
-        };
+    auto to_byte = [](const std::string& s, size_t pos) -> int { return std::stoi(s.substr(pos, 2), nullptr, 16); };
 
     if (hex.size() == 7) {
         // "#RRGGBB" -> alpha 255
-        return 0xFF000000 |
-            (to_byte(hex, 1) << 16) |
-            (to_byte(hex, 3) << 8) |
-            to_byte(hex, 5);
+        return 0xFF000000 | (to_byte(hex, 1) << 16) | (to_byte(hex, 3) << 8) | to_byte(hex, 5);
     }
 
     // "AARRGGBB"
-    return (to_byte(hex, 1) << 24) |
-        (to_byte(hex, 3) << 16) |
-        (to_byte(hex, 5) << 8) |
-        to_byte(hex, 7);
+    return (to_byte(hex, 1) << 24) | (to_byte(hex, 3) << 16) | (to_byte(hex, 5) << 8) | to_byte(hex, 7);
 }
 
 static void LogLoadedConfig();
@@ -69,9 +61,7 @@ bool LoadConfig(const std::string& path) {
         if (j.contains("timestamps")) {
             const auto& t = j["timestamps"];
             g_config.timestamps.enabled = t.value("enabled", g_config.timestamps.enabled);
-            g_config.timestamps.color = ParseColor(
-                t.value("color", "#969696"),
-                g_config.timestamps.color);
+            g_config.timestamps.color = ParseColor(t.value("color", "#969696"), g_config.timestamps.color);
         }
 
         // background
@@ -84,21 +74,18 @@ bool LoadConfig(const std::string& path) {
 
         // scrollbar
         if (j.contains("scrollbar")) {
-            g_config.scrollbar.enabled =
-                j["scrollbar"].value("enabled", g_config.scrollbar.enabled);
+            g_config.scrollbar.enabled = j["scrollbar"].value("enabled", g_config.scrollbar.enabled);
         }
 
         // log
         if (j.contains("log")) {
-            g_config.log.level =
-                j["log"].value("level", g_config.log.level);
+            g_config.log.level = j["log"].value("level", g_config.log.level);
         }
 
         LogLoadedConfig();
         Logger::Ok("Config loaded: " + path);
         return true;
-    }
-    catch (const std::exception& e) {
+    } catch (const std::exception& e) {
         Logger::Error(std::string("Config parse error: ") + e.what());
         return false;
     }
@@ -126,8 +113,7 @@ static void LogLoadedConfig() {
 
     {
         std::ostringstream color_stream;
-        color_stream << std::hex << std::uppercase
-            << g_config.timestamps.color;
+        color_stream << std::hex << std::uppercase << g_config.timestamps.color;
         Logger::Info("timestamps.color = 0x" + color_stream.str());
     }
 

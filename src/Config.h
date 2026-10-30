@@ -1,6 +1,6 @@
 #pragma once
-#include <string>
 #include <d3d9.h>
+#include <string>
 
 struct ChatConfig {
     int x = 45;

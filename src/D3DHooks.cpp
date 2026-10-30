@@ -1,18 +1,16 @@
 #include "D3DHooks.h"
-#include "Globals.h"
-#include "Config.h"
-#include "Logger.h"
 #include "ChatRenderer.h"
-
-#include <Windows.h>
-#include <MinHook.h>
-#include <string>
-
+#include "Config.h"
+#include "Globals.h"
+#include "Logger.h"
 #include "Menu.h"
 #include "WndProcHook.h"
+#include <MinHook/MinHook.h>
+#include <Windows.h>
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_dx9.h>
 #include <imgui/imgui_impl_win32.h>
+#include <string>
 
 // ---------------------------------------------------------------------------
 // IDirect3DDevice9::EndScene
@@ -34,7 +32,7 @@ static HRESULT __stdcall EndSceneHooked(IDirect3DDevice9* device) {
         CreateGraphics(device);
     }
 
-    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ ImGui.
+    // Однократная инициализация ImGui.
     if (!g_imgui_ready) {
         menu::Init(device);
         InstallWndProcHook();
@@ -46,20 +44,19 @@ static HRESULT __stdcall EndSceneHooked(IDirect3DDevice9* device) {
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 
-    // пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ Present, пїЅпїЅпїЅпїЅпїЅ ImGui::NewFrame():
+    // В начале Present, после ImGui::NewFrame():
     if (g_menu_open) {
         if (!g_cursor_shown) {
             g_cursor_shown = true;
             ToggleCursor(true);
         }
-        // ... пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ ...
-    }
-    else if (g_cursor_shown) {
+        // ... отрисовка меню ...
+    } else if (g_cursor_shown) {
         g_cursor_shown = false;
         ToggleCursor(false);
     }
 
-    // --- пїЅпїЅпїЅ пїЅпїЅпїЅ (пїЅпїЅпїЅ пїЅпїЅпїЅпїЅ) ---
+    // --- Наш чат (под меню) ---
     RECT clip;
     clip.left = g_config.chat.x;
     clip.top = g_config.chat.y;
@@ -77,7 +74,7 @@ static HRESULT __stdcall EndSceneHooked(IDirect3DDevice9* device) {
 
     device->SetRenderState(D3DRS_SCISSORTESTENABLE, old_scissor);
 
-    // --- пїЅпїЅпїЅпїЅ ImGui (пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ) ---
+    // --- Меню ImGui (поверх чата) ---
     menu::Render(device);
 
     ImGui::EndFrame();
@@ -95,20 +92,14 @@ static HRESULT __stdcall EndSceneHooked(IDirect3DDevice9* device) {
 // IDirect3DDevice9::Reset
 // ---------------------------------------------------------------------------
 
-using Reset_t = HRESULT(__stdcall*)(
-    IDirect3DDevice9* device,
-    D3DPRESENT_PARAMETERS* parameters);
+using Reset_t = HRESULT(__stdcall*)(IDirect3DDevice9* device, D3DPRESENT_PARAMETERS* parameters);
 
 static Reset_t fp_reset = nullptr;
 
-static HRESULT __stdcall ResetHooked(
-    IDirect3DDevice9* device,
-    D3DPRESENT_PARAMETERS* parameters)
-{
+static HRESULT __stdcall ResetHooked(IDirect3DDevice9* device, D3DPRESENT_PARAMETERS* parameters) {
     ReleaseGraphics();
 
-    const HRESULT result =
-        fp_reset(device, parameters);
+    const HRESULT result = fp_reset(device, parameters);
 
     if (SUCCEEDED(result)) {
         g_device = device;
@@ -119,35 +110,23 @@ static HRESULT __stdcall ResetHooked(
 }
 
 // ---------------------------------------------------------------------------
-// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ D3D-пїЅпїЅпїЅпїЅпїЅ.
+// Установка D3D-хуков.
 // ---------------------------------------------------------------------------
 
-static bool CreateAndEnableHook(
-    const char* name,
-    void* target,
-    void* detour,
-    void** original)
-{
+static bool CreateAndEnableHook(const char* name, void* target, void* detour, void** original) {
     Logger::Pointer(name, reinterpret_cast<uintptr_t>(target));
 
-    MH_STATUS status = MH_CreateHook(
-        target,
-        detour,
-        original);
+    MH_STATUS status = MH_CreateHook(target, detour, original);
 
     if (status != MH_OK) {
-        Logger::Error(
-            std::string(name) + ": MH_CreateHook failed, status=" +
-            std::to_string(static_cast<int>(status)));
+        Logger::Error(std::string(name) + ": MH_CreateHook failed, status=" + std::to_string(static_cast<int>(status)));
         return false;
     }
 
     status = MH_EnableHook(target);
 
     if (status != MH_OK) {
-        Logger::Error(
-            std::string(name) + ": MH_EnableHook failed, status=" +
-            std::to_string(static_cast<int>(status)));
+        Logger::Error(std::string(name) + ": MH_EnableHook failed, status=" + std::to_string(static_cast<int>(status)));
         return false;
     }
 
@@ -156,54 +135,38 @@ static bool CreateAndEnableHook(
 }
 
 bool InstallD3DHooks() {
-    const DWORD device_pointer =
-        *reinterpret_cast<DWORD*>(0xC97C28);
+    const DWORD device_pointer = *reinterpret_cast<DWORD*>(0xC97C28);
 
     if (!device_pointer) {
         Logger::Error("D3D9 device pointer is null");
         return false;
     }
 
-    void** vtable =
-        *reinterpret_cast<void***>(device_pointer);
+    void** vtable = *reinterpret_cast<void***>(device_pointer);
 
     if (!vtable) {
         Logger::Error("D3D9 vtable is null");
         return false;
     }
 
-    // EndScene пїЅ vtable index 42.
-    if (!CreateAndEnableHook(
-        "IDirect3DDevice9::EndScene",
-        vtable[42],
-        &EndSceneHooked,
-        reinterpret_cast<void**>(&fp_end_scene)))
-    {
+    // EndScene — vtable index 42.
+    if (!CreateAndEnableHook("IDirect3DDevice9::EndScene", vtable[42], &EndSceneHooked,
+                             reinterpret_cast<void**>(&fp_end_scene))) {
         return false;
     }
 
-    // Reset пїЅ vtable index 16.
-    CreateAndEnableHook(
-        "IDirect3DDevice9::Reset",
-        vtable[16],
-        &ResetHooked,
-        reinterpret_cast<void**>(&fp_reset));
+    // Reset — vtable index 16.
+    CreateAndEnableHook("IDirect3DDevice9::Reset", vtable[16], &ResetHooked, reinterpret_cast<void**>(&fp_reset));
 
     return true;
 }
 
 void ShutdownD3DHooks() {
     if (fp_end_scene) {
-        MH_DisableHook(
-            *reinterpret_cast<void**>(
-                *reinterpret_cast<void***>(
-                    *reinterpret_cast<DWORD*>(0xC97C28)) + 42));
+        MH_DisableHook(*reinterpret_cast<void**>(*reinterpret_cast<void***>(*reinterpret_cast<DWORD*>(0xC97C28)) + 42));
     }
 
     if (fp_reset) {
-        MH_DisableHook(
-            *reinterpret_cast<void**>(
-                *reinterpret_cast<void***>(
-                    *reinterpret_cast<DWORD*>(0xC97C28)) + 16));
+        MH_DisableHook(*reinterpret_cast<void**>(*reinterpret_cast<void***>(*reinterpret_cast<DWORD*>(0xC97C28)) + 16));
     }
 }

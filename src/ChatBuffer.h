@@ -1,10 +1,9 @@
 #pragma once
+#include "ChatTextParser.h"
+#include <d3d9.h>
+#include <deque>
 #include <string>
 #include <vector>
-#include <deque>
-#include <d3d9.h>
-
-#include "ChatTextParser.h"
 
 struct ChatMessage {
     std::vector<TextSegment> segments;
@@ -17,11 +16,7 @@ public:
     std::deque<ChatMessage> messages;
     size_t max_messages = 300;
 
-    void Append(
-        const std::wstring& text,
-        D3DCOLOR color,
-        const std::wstring& timestamp)
-    {
+    void Append(const std::wstring& text, D3DCOLOR color, const std::wstring& timestamp) {
         ChatMessage message;
         message.base_color = color;
         message.timestamp = timestamp;
@@ -34,7 +29,5 @@ public:
         }
     }
 
-    void Clear() {
-        messages.clear();
-    }
+    void Clear() { messages.clear(); }
 };

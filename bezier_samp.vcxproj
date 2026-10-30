@@ -147,18 +147,8 @@
     <ClCompile Include="src\ConsoleManager.cpp" />
     <ClCompile Include="src\D3DHooks.cpp" />
     <ClCompile Include="src\dllmain.cpp" />
-    <ClCompile Include="src\dxut\dxstdafx.cpp" />
-    <ClCompile Include="src\dxut\DXUT.cpp" />
-    <ClCompile Include="src\dxut\DXUTenum.cpp" />
-    <ClCompile Include="src\dxut\DXUTgui.cpp" />
-    <ClCompile Include="src\dxut\DXUTMesh.cpp" />
-    <ClCompile Include="src\dxut\DXUTmisc.cpp" />
-    <ClCompile Include="src\dxut\DXUTSettingsDlg.cpp" />
-    <ClCompile Include="src\dxut\DXUTsound.cpp" />
-    <ClCompile Include="src\EasingsHolder.cpp" />
     <ClCompile Include="src\Globals.cpp" />
     <ClCompile Include="src\Menu.cpp" />
-    <ClCompile Include="src\UtilityHelper.cpp" />
     <ClCompile Include="src\WndProcHook.cpp" />
     <ClCompile Include="third-party\imgui\imgui.cpp" />
     <ClCompile Include="third-party\imgui\imgui_draw.cpp" />
@@ -181,17 +171,6 @@
     <ClInclude Include="src\ScrollbarView.h" />
     <ClInclude Include="src\ScrollPhysics.h" />
     <ClInclude Include="src\ConsoleManager.h" />
-    <ClInclude Include="src\dxut\dxstdafx.h" />
-    <ClInclude Include="src\dxut\DXUT.h" />
-    <ClInclude Include="src\dxut\DXUTenum.h" />
-    <ClInclude Include="src\dxut\DXUTgui.h" />
-    <ClInclude Include="src\dxut\DXUTMesh.h" />
-    <ClInclude Include="src\dxut\DXUTmisc.h" />
-    <ClInclude Include="src\dxut\DXUTSettingsDlg.h" />
-    <ClInclude Include="src\dxut\DXUTsound.h" />
-    <ClInclude Include="src\EasingsHolder.h" />
-    <ClInclude Include="src\Structures.h" />
-    <ClInclude Include="src\UtilityHelper.h" />
     <ClInclude Include="src\WndProcHook.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

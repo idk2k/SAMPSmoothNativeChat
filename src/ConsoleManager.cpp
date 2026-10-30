@@ -1,5 +1,4 @@
 #include "ConsoleManager.h"
-
 #include <cstdio>
 
 ConsoleManager& ConsoleManager::get_instance() {
@@ -9,7 +8,8 @@ ConsoleManager& ConsoleManager::get_instance() {
 
 [[nodiscard]] BOOL ConsoleManager::create_console() {
     BOOL status = AllocConsole();
-    if (!status) return status;
+    if (!status)
+        return status;
     FILE* fDummy;
     freopen_s(&fDummy, "CONOUT$", "w", stdout);
     freopen_s(&fDummy, "CONOUT$", "w", stderr);

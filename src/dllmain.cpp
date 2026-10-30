@@ -3,18 +3,16 @@
 #define NOMINMAX
 #endif
 
-#include <Windows.h>
-#include <process.h>
-#include <MinHook.h>
-
-#include "Globals.h"
-#include "Logger.h"
 #include "ChatHooks.h"
-#include "D3DHooks.h"
-#include "ConsoleManager.h"
 #include "ChatRenderer.h"
 #include "Config.h"
-
+#include "ConsoleManager.h"
+#include "D3DHooks.h"
+#include "Globals.h"
+#include "Logger.h"
+#include <MinHook/MinHook.h>
+#include <Windows.h>
+#include <process.h>
 #include <string>
 
 static unsigned int __stdcall InitializationThread(LPVOID) {
@@ -32,9 +30,7 @@ static unsigned int __stdcall InitializationThread(LPVOID) {
 
         if (!chat) {
             if (attempt % 50 == 0) {
-                Logger::Info(
-                    "Waiting for CChatInfo, attempt=" +
-                    std::to_string(attempt));
+                Logger::Info("Waiting for CChatInfo, attempt=" + std::to_string(attempt));
             }
 
             Sleep(100);
@@ -76,11 +72,7 @@ static void InitializeAddresses() {
     Logger::Pointer("CChat::MoveScrollbar", g_addresses.chat_move_scrollbar);
 }
 
-auto WINAPI DllMain(
-    HINSTANCE instance,
-    DWORD reason,
-    LPVOID reserved) -> BOOL
-{
+auto WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved) -> BOOL {
     UNREFERENCED_PARAMETER(reserved);
 
     switch (reason) {
@@ -93,7 +85,7 @@ auto WINAPI DllMain(
 
         Logger::Init();
 
-        // пїЅпїЅпїЅпїЅ пїЅ config.json пїЅпїЅпїЅпїЅпїЅ пїЅ .asi.
+        // Путь к config.json рядом с .asi.
         char module_path[MAX_PATH]{};
         GetModuleFileNameA(instance, module_path, MAX_PATH);
 
@@ -120,25 +112,17 @@ auto WINAPI DllMain(
             return FALSE;
         }
 
-        g_samp_base =
-            reinterpret_cast<uintptr_t>(samp_module);
+        g_samp_base = reinterpret_cast<uintptr_t>(samp_module);
 
         Logger::Pointer("samp.dll base", g_samp_base);
 
         InitializeAddresses();
 
-        const uintptr_t thread = _beginthreadex(
-            nullptr,
-            0,
-            &InitializationThread,
-            nullptr,
-            0,
-            nullptr);
+        const uintptr_t thread = _beginthreadex(nullptr, 0, &InitializationThread, nullptr, 0, nullptr);
 
         if (thread) {
             CloseHandle(reinterpret_cast<HANDLE>(thread));
-        }
-        else {
+        } else {
             Logger::Error("Failed to create initialization thread");
         }
 

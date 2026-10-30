@@ -1,21 +1,18 @@
 #include "ChatHooks.h"
-#include "Globals.h"
 #include "Config.h"
+#include "Globals.h"
 #include "Logger.h"
-
-#include <Windows.h>
-#include <MinHook.h>
-#include <string>
-
-#include <sstream>
-#include <iomanip>
-
 #include "NativeDxutScrollbarView.h"
+#include <MinHook/MinHook.h>
+#include <Windows.h>
+#include <iomanip>
+#include <sstream>
+#include <string>
 
 static bool g_scrollbar_bound = false;
 
-// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ DXUT-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
-// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ.
+// Привязка нативного DXUT-скроллбара.
+// Вызывается один раз — при первом сообщении в чате.
 static void EnsureScrollbarBound() {
     if (g_scrollbar_bound) {
         return;
@@ -27,9 +24,8 @@ static void EnsureScrollbarBound() {
         return;
     }
 
-    // CChat::m_pScrollbar пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ 0x11E пїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ R5.
-    void* scrollbar = *reinterpret_cast<void**>(
-        reinterpret_cast<uintptr_t>(chat) + 0x11E);
+    // CChat::m_pScrollbar — смещение 0x11E в этой сборке R5.
+    void* scrollbar = *reinterpret_cast<void**>(reinterpret_cast<uintptr_t>(chat) + 0x11E);
 
     if (!scrollbar) {
         return;
@@ -37,21 +33,19 @@ static void EnsureScrollbarBound() {
 
     g_native_scrollbar.SetScrollbar(scrollbar);
 
-    // CDXUTScrollBar::Scroll пїЅ samp.dll + 0x887B0.
-    g_native_scrollbar.SetScrollFunction(
-        g_samp_base + 0x887B0);
+    // CDXUTScrollBar::Scroll — samp.dll + 0x887B0.
+    g_native_scrollbar.SetScrollFunction(g_samp_base + 0x887B0);
 
-    // пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ -> пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅ 1:1.
-    g_native_scrollbar.on_external_scroll =
-        [](float fraction) {
+    // Драг ползунка мышью -> чат следует за ним 1:1.
+    g_native_scrollbar.on_external_scroll = [](float fraction) {
         g_scroll.SetTargetFraction(fraction);
         g_scroll.SnapToTarget();
-        };
+    };
 
-    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
+    // Калибровка диапазона нативного скроллбара.
     g_native_scrollbar.Calibrate();
 
-    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
+    // Переключаем активную вьюшку с заглушки на нативную.
     g_scrollbar = &g_native_scrollbar;
 
     g_scrollbar_bound = true;
@@ -60,34 +54,28 @@ static void EnsureScrollbarBound() {
 }
 
 // ---------------------------------------------------------------------------
-// пїЅпїЅпїЅпїЅпїЅпїЅ SA-MP 0.3.7 R5.
-// пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: final = samp.dll base + offset.
+// Адреса SA-MP 0.3.7 R5.
+// Все адреса относительные: final = samp.dll base + offset.
 // ---------------------------------------------------------------------------
 
 namespace offsets {
-    constexpr uintptr_t kChatInfo = 0x26EB80;
-    constexpr uintptr_t kChatScroll = 0x673C0;
-    constexpr uintptr_t kChatRenderEntry = 0x67470;
-    constexpr uintptr_t kChatAddEntry = 0x67BE0;
-    constexpr uintptr_t kChatRecalcFontSize = 0x67120;
-    constexpr uintptr_t kChatRender = 0x67940;
-    constexpr uintptr_t kChatMoveScrollbar = 0x887B0;
-}
+constexpr uintptr_t kChatInfo = 0x26EB80;
+constexpr uintptr_t kChatScroll = 0x673C0;
+constexpr uintptr_t kChatRenderEntry = 0x67470;
+constexpr uintptr_t kChatAddEntry = 0x67BE0;
+constexpr uintptr_t kChatRecalcFontSize = 0x67120;
+constexpr uintptr_t kChatRender = 0x67940;
+constexpr uintptr_t kChatMoveScrollbar = 0x887B0;
+} // namespace offsets
 
 // ---------------------------------------------------------------------------
 // CChat::AddEntry
 // void CChat::AddEntry(int, const char*, const char*, D3DCOLOR, D3DCOLOR)
-// thiscall: ecx = this, edx = пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
+// thiscall: ecx = this, edx = пустой регистр.
 // ---------------------------------------------------------------------------
 
-using AddEntry_t = void(__fastcall*)(
-    void* ecx,
-    void* edx,
-    int type,
-    const char* text,
-    const char* prefix,
-    D3DCOLOR text_color,
-    D3DCOLOR prefix_color);
+using AddEntry_t = void(__fastcall*)(void* ecx, void* edx, int type, const char* text, const char* prefix,
+                                     D3DCOLOR text_color, D3DCOLOR prefix_color);
 
 static AddEntry_t fp_add_entry = nullptr;
 
@@ -96,8 +84,7 @@ static std::wstring ToWideCp1251(const char* text) {
         return L"";
     }
 
-    const int size =
-        MultiByteToWideChar(1251, 0, text, -1, nullptr, 0);
+    const int size = MultiByteToWideChar(1251, 0, text, -1, nullptr, 0);
 
     if (size <= 0) {
         return L"";
@@ -106,8 +93,8 @@ static std::wstring ToWideCp1251(const char* text) {
     std::wstring wide(static_cast<size_t>(size), L'\0');
     MultiByteToWideChar(1251, 0, text, -1, &wide[0], size);
 
-    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ '\0', пїЅпїЅпїЅпїЅпїЅпїЅпїЅ MultiByteToWideChar
-    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ cbMultiByte = -1.
+    // Убираем завершающий '\0', который MultiByteToWideChar
+    // включает в возвращаемый размер при cbMultiByte = -1.
     if (!wide.empty() && wide.back() == L'\0') {
         wide.pop_back();
     }
@@ -115,16 +102,14 @@ static std::wstring ToWideCp1251(const char* text) {
     return wide;
 }
 
-// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ UTF-16 -> UTF-8 пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ.
+// Конвертация UTF-16 -> UTF-8 для консольного лога.
 static std::string ToUtf8Log(const std::wstring& wide) {
     if (wide.empty()) {
         return "";
     }
 
-    const int size = WideCharToMultiByte(
-        CP_UTF8, 0,
-        wide.c_str(), static_cast<int>(wide.size()),
-        nullptr, 0, nullptr, nullptr);
+    const int size =
+        WideCharToMultiByte(CP_UTF8, 0, wide.c_str(), static_cast<int>(wide.size()), nullptr, 0, nullptr, nullptr);
 
     if (size <= 0) {
         return "";
@@ -132,29 +117,16 @@ static std::string ToUtf8Log(const std::wstring& wide) {
 
     std::string utf8(static_cast<size_t>(size), '\0');
 
-    WideCharToMultiByte(
-        CP_UTF8, 0,
-        wide.c_str(), static_cast<int>(wide.size()),
-        &utf8[0], size,
-        nullptr, nullptr);
+    WideCharToMultiByte(CP_UTF8, 0, wide.c_str(), static_cast<int>(wide.size()), &utf8[0], size, nullptr, nullptr);
 
     return utf8;
 }
 
-static void __fastcall AddEntryHooked(
-    void* ecx,
-    void* edx,
-    int type,
-    const char* text,
-    const char* prefix,
-    D3DCOLOR text_color,
-    D3DCOLOR prefix_color)
-{
-    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
+static void __fastcall AddEntryHooked(void* ecx, void* edx, int type, const char* text, const char* prefix,
+                                      D3DCOLOR text_color, D3DCOLOR prefix_color) {
+    // Нативный буфер продолжаем наполнять.
     if (fp_add_entry) {
-        fp_add_entry(
-            ecx, edx, type, text, prefix,
-            text_color, prefix_color);
+        fp_add_entry(ecx, edx, type, text, prefix, text_color, prefix_color);
     }
 
     std::wstring wide_text = ToWideCp1251(text);
@@ -164,8 +136,7 @@ static void __fastcall AddEntryHooked(
 
     if (!wide_prefix.empty()) {
         full = wide_prefix + L" " + wide_text;
-    }
-    else {
+    } else {
         full = wide_text;
     }
 
@@ -177,11 +148,10 @@ static void __fastcall AddEntryHooked(
         text_color |= 0xFF000000;
     }
 
-    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
-    const bool was_at_bottom =
-        g_scroll.position >= g_scroll.max_position - 0.5f;
+    // Запоминаем, был ли пользователь внизу истории ДО добавления сообщения.
+    const bool was_at_bottom = g_scroll.position >= g_scroll.max_position - 0.5f;
 
-    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
+    // Текущее время для таймстампа.
     SYSTEMTIME st{};
     GetLocalTime(&st);
 
@@ -194,15 +164,12 @@ static void __fastcall AddEntryHooked(
         std::ostringstream color_stream;
         color_stream << std::hex << std::uppercase << text_color;
 
-        Logger::SAMP(
-            "AddEntry: type=" + std::to_string(type) +
-            ", color=0x" + color_stream.str() +
-            ", prefix='" + ToUtf8Log(wide_prefix) + "'" +
-            ", text='" + ToUtf8Log(wide_text) + "'");
+        Logger::SAMP("AddEntry: type=" + std::to_string(type) + ", color=0x" + color_stream.str() + ", prefix='" +
+                     ToUtf8Log(wide_prefix) + "'" + ", text='" + ToUtf8Log(wide_text) + "'");
     }
 
-    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ,
-    // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ.
+    // Привязываем скроллбар при первом сообщении,
+    // когда он уже точно нужен и видим.
     if (g_chat_buffer.messages.size() > 10) {
         EnsureScrollbarBound();
     }
@@ -210,15 +177,15 @@ static void __fastcall AddEntryHooked(
     RecalculateScrollBounds();
 
     if (was_at_bottom) {
-        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ,
-        // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ.
+        // Пользователь был внизу — остаёмся внизу,
+        // новое сообщение сразу видно.
         g_scroll.SnapToBottom();
     }
 }
 
 // ---------------------------------------------------------------------------
 // CChat::Render
-// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ.
+// Полностью отключаем нативный рендер чата.
 // ---------------------------------------------------------------------------
 
 using ChatRender_t = void(__fastcall*)(void* ecx, void* edx);
@@ -226,74 +193,52 @@ using ChatRender_t = void(__fastcall*)(void* ecx, void* edx);
 static ChatRender_t fp_chat_render = nullptr;
 
 static void __fastcall ChatRenderHooked(void* ecx, void* edx) {
-    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
-    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: пїЅпїЅ пїЅпїЅпїЅ, пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
+    // Оригинал не вызывается.
+    // Нативный чат не рисуется: ни фон, ни строки, ни скроллбар.
 }
 
 // ---------------------------------------------------------------------------
 // CChat::OnScroll
 // ---------------------------------------------------------------------------
 
-using ChatScroll_t = void(__fastcall*)(
-    void* ecx,
-    void* edx,
-    int delta);
+using ChatScroll_t = void(__fastcall*)(void* ecx, void* edx, int delta);
 
 static ChatScroll_t fp_chat_scroll = nullptr;
 
-static void __fastcall ChatScrollHooked(
-    void* ecx,
-    void* edx,
-    int delta)
-{
+static void __fastcall ChatScrollHooked(void* ecx, void* edx, int delta) {
     if (delta == 0) {
         return;
     }
 
-    // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ: delta > 0 пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
+    // Колесо вверх: delta > 0 — показываем более старые сообщения.
     const float direction = (delta > 0) ? -1.0f : 1.0f;
 
-    g_scroll.AddTarget(
-        direction *
-        g_config.scroll.lines_per_click *
-        static_cast<float>(g_config.chat.line_height));
+    g_scroll.AddTarget(direction * g_config.scroll.lines_per_click * static_cast<float>(g_config.chat.line_height));
 
-    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
-    // пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ:
+    // Нативную прокрутку не вызываем.
+    // Если нужно временно вернуть нативный скроллбар:
     // fp_chat_scroll(ecx, edx, delta);
 }
 
 // ---------------------------------------------------------------------------
-// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ.
+// Установка хуков.
 // ---------------------------------------------------------------------------
 
-static bool CreateAndEnableHook(
-    const char* name,
-    uintptr_t target,
-    void* detour,
-    void** original)
-{
+static bool CreateAndEnableHook(const char* name, uintptr_t target, void* detour, void** original) {
     Logger::Hook(std::string("Target: ") + name);
     Logger::Pointer(name, target);
 
-    MH_STATUS status = MH_CreateHook(
-        reinterpret_cast<LPVOID>(target),
-        detour,
-        original);
+    MH_STATUS status = MH_CreateHook(reinterpret_cast<LPVOID>(target), detour, original);
 
     if (status != MH_OK) {
-        Logger::Error(
-            std::string(name) + ": MH_CreateHook failed, status=" +
-            std::to_string(static_cast<int>(status)));
+        Logger::Error(std::string(name) + ": MH_CreateHook failed, status=" + std::to_string(static_cast<int>(status)));
         return false;
     }
 
     status = MH_EnableHook(reinterpret_cast<LPVOID>(target));
 
     if (status != MH_OK) {
-        Logger::Error(
-            std::string(name) + ": MH_EnableHook failed, status=" +
-            std::to_string(static_cast<int>(status)));
+        Logger::Error(std::string(name) + ": MH_EnableHook failed, status=" + std::to_string(static_cast<int>(status)));
         return false;
     }
 
@@ -304,49 +249,28 @@ static bool CreateAndEnableHook(
 void InstallChatHooks() {
     Logger::Hook("Installing SA-MP chat hooks");
 
-    CreateAndEnableHook(
-        "CChat::AddEntry",
-        ToAbsolute(offsets::kChatAddEntry),
-        &AddEntryHooked,
-        reinterpret_cast<void**>(&fp_add_entry));
+    CreateAndEnableHook("CChat::AddEntry", ToAbsolute(offsets::kChatAddEntry), &AddEntryHooked,
+                        reinterpret_cast<void**>(&fp_add_entry));
 
-    CreateAndEnableHook(
-        "CChat::Render",
-        ToAbsolute(offsets::kChatRender),
-        &ChatRenderHooked,
-        reinterpret_cast<void**>(&fp_chat_render));
+    CreateAndEnableHook("CChat::Render", ToAbsolute(offsets::kChatRender), &ChatRenderHooked,
+                        reinterpret_cast<void**>(&fp_chat_render));
 
-    CreateAndEnableHook(
-        "CChat::OnScroll",
-        ToAbsolute(offsets::kChatScroll),
-        &ChatScrollHooked,
-        reinterpret_cast<void**>(&fp_chat_scroll));
+    CreateAndEnableHook("CChat::OnScroll", ToAbsolute(offsets::kChatScroll), &ChatScrollHooked,
+                        reinterpret_cast<void**>(&fp_chat_scroll));
 
     Logger::Info("SA-MP chat hooks installed");
 }
 
 void ShutdownChatHooks() {
-    MH_DisableHook(
-        reinterpret_cast<LPVOID>(
-            ToAbsolute(offsets::kChatAddEntry)));
+    MH_DisableHook(reinterpret_cast<LPVOID>(ToAbsolute(offsets::kChatAddEntry)));
 
-    MH_DisableHook(
-        reinterpret_cast<LPVOID>(
-            ToAbsolute(offsets::kChatRender)));
+    MH_DisableHook(reinterpret_cast<LPVOID>(ToAbsolute(offsets::kChatRender)));
 
-    MH_DisableHook(
-        reinterpret_cast<LPVOID>(
-            ToAbsolute(offsets::kChatScroll)));
+    MH_DisableHook(reinterpret_cast<LPVOID>(ToAbsolute(offsets::kChatScroll)));
 
-    MH_RemoveHook(
-        reinterpret_cast<LPVOID>(
-            ToAbsolute(offsets::kChatAddEntry)));
+    MH_RemoveHook(reinterpret_cast<LPVOID>(ToAbsolute(offsets::kChatAddEntry)));
 
-    MH_RemoveHook(
-        reinterpret_cast<LPVOID>(
-            ToAbsolute(offsets::kChatRender)));
+    MH_RemoveHook(reinterpret_cast<LPVOID>(ToAbsolute(offsets::kChatRender)));
 
-    MH_RemoveHook(
-        reinterpret_cast<LPVOID>(
-            ToAbsolute(offsets::kChatScroll)));
+    MH_RemoveHook(reinterpret_cast<LPVOID>(ToAbsolute(offsets::kChatScroll)));
 }

@@ -1,13 +1,11 @@
 #pragma once
+#include "ChatBuffer.h"
+#include "NativeDxutScrollbarView.h"
+#include "ScrollPhysics.h"
+#include "ScrollbarView.h"
 #include <cstdint>
 #include <d3d9.h>
 #include <d3dx9.h>
-
-#include "ScrollPhysics.h"
-#include "ChatBuffer.h"
-
-#include "ScrollbarView.h"
-#include "NativeDxutScrollbarView.h"
 
 extern IScrollbarView* g_scrollbar;
 extern NativeDxutScrollbarView g_native_scrollbar;
@@ -57,7 +55,6 @@ extern FrameClock g_frame_clock;
 uintptr_t ToAbsolute(uintptr_t relative);
 void* GetChatInfo();
 void RecalculateScrollBounds();
-
 
 extern bool g_chat_input_open;
 

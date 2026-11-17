@@ -29,6 +29,7 @@ void menu::Init(IDirect3DDevice9* device) {
     std::string font_path = std::string(windows_dir) + "\\Fonts\\Tahoma.TTF";
 
     ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NoMouseCursorChange;
     io.Fonts->AddFontFromFileTTF(font_path.c_str(), 16.0f, nullptr, io.Fonts->GetGlyphRangesCyrillic());
 
     g_imgui_initialized = true;
@@ -41,13 +42,9 @@ void menu::Render(IDirect3DDevice9* device) {
     if (!g_imgui_initialized || !g_menu_open) {
         return;
     }
-
     ImGui::SetNextWindowSize(ImVec2(420, 320), ImGuiCond_FirstUseEver);
 
     if (ImGui::Begin("SAMPSmoothNativeChat", &g_menu_open)) {
-        // -------------------------------------------------------------
-        // Chat
-        // -------------------------------------------------------------
         if (ImGui::CollapsingHeader("Chat", ImGuiTreeNodeFlags_DefaultOpen)) {
             bool graphics_changed = false;
 
@@ -69,23 +66,14 @@ void menu::Render(IDirect3DDevice9* device) {
             }
         }
 
-        // -------------------------------------------------------------
-        // Scroll
-        // -------------------------------------------------------------
         if (ImGui::CollapsingHeader("Scroll", ImGuiTreeNodeFlags_DefaultOpen)) {
             ImGui::SliderFloat("Lines per click", &g_config.scroll.lines_per_click, 0.5f, 10.0f, "%.1f");
-
             ImGui::SliderFloat("Stiffness", &g_config.scroll.stiffness, 50.0f, 600.0f, "%.0f");
-
             ImGui::SliderFloat("Friction", &g_config.scroll.friction, 5.0f, 80.0f, "%.0f");
-
             g_scroll.stiffness = g_config.scroll.stiffness;
             g_scroll.friction = g_config.scroll.friction;
         }
 
-        // -------------------------------------------------------------
-        // Info
-        // -------------------------------------------------------------
         if (ImGui::CollapsingHeader("Info")) {
             ImGui::Text("Messages: %d", (int)g_chat_buffer.messages.size());
             ImGui::Text("Scroll position: %.1f", g_scroll.position);
@@ -99,8 +87,7 @@ void menu::Render(IDirect3DDevice9* device) {
         if (ImGui::Button("Save Settings", ImVec2(-1, 30))) {
             if (SaveConfig("smooth_chat_config.json")) {
                 Logger::Debug("Configuration successfully saved!");
-            }
-            else {
+            } else {
                 Logger::Error("Failed to save configuration.");
             }
         }

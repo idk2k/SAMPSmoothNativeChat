@@ -14,10 +14,9 @@ bool CreateGraphics(IDirect3DDevice9* device) {
         return false;
     }
 
-    if (FAILED(D3DXCreateFontW(device,
-                               g_config.chat.font_size, // ���� config::kLineHeight
-                               0, FW_NORMAL, 1, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLEARTYPE_QUALITY,
-                               DEFAULT_PITCH | FF_DONTCARE, L"Arial", &g_font))) {
+    if (FAILED(D3DXCreateFontW(device, g_config.chat.font_size, 0, FW_NORMAL, 1, FALSE, DEFAULT_CHARSET,
+                               OUT_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH | FF_DONTCARE, L"Arial",
+                               &g_font))) {
         Logger::Error("D3DXCreateFontW failed");
         return false;
     }
@@ -55,26 +54,19 @@ bool CreateGraphics(IDirect3DDevice9* device) {
     if (SUCCEEDED(g_bg_texture->LockRect(0, &locked, nullptr, 0))) {
         for (int y = 0; y < g_config.chat.height; ++y) {
             DWORD* row = reinterpret_cast<DWORD*>(reinterpret_cast<BYTE*>(locked.pBits) + y * locked.Pitch);
-
             for (int x = 0; x < g_config.chat.width; ++x) {
-                // ������������ ��������: ������ ����� ���������,
-                // ����� �������.
                 const float t = static_cast<float>(y) / static_cast<float>(g_config.chat.height - 1);
-
                 const BYTE alpha =
                     static_cast<BYTE>(g_config.background.top_alpha +
                                       (g_config.background.bottom_alpha - g_config.background.top_alpha) * t);
-
                 row[x] = (static_cast<DWORD>(alpha) << 24) | 0x00000000;
             }
         }
-
         g_bg_texture->UnlockRect(0);
     }
 
     g_graphics_ready = true;
     Logger::Ok("Graphics created");
-
     return true;
 }
 
@@ -83,17 +75,14 @@ void ReleaseGraphics() {
         g_bg_texture->Release();
         g_bg_texture = nullptr;
     }
-
     if (g_sprite) {
         g_sprite->Release();
         g_sprite = nullptr;
     }
-
     if (g_font) {
         g_font->Release();
         g_font = nullptr;
     }
-
     g_graphics_ready = false;
 }
 
@@ -104,16 +93,18 @@ void RenderChat(IDirect3DDevice9* device) {
 
     RecalculateScrollBounds();
 
+    if (g_config.chat.line_height <= 0) {
+        return;
+    }
+
     const float scroll_px = g_scroll.position;
-
     const int current_line = static_cast<int>(std::lround(scroll_px / g_config.chat.line_height));
-
-    g_scrollbar->SetPosition(current_line);
+    if (g_scrollbar) {
+        g_scrollbar->SetPosition(current_line);
+    }
 
     const int first_index = static_cast<int>(std::floor(scroll_px / g_config.chat.line_height));
-
     const int last_index = static_cast<int>(std::ceil((scroll_px + g_config.chat.height) / g_config.chat.line_height));
-
 
     RECT background_rect;
     background_rect.left = 0;
@@ -125,31 +116,24 @@ void RenderChat(IDirect3DDevice9* device) {
 
     if (g_chat_input_open) {
         g_sprite->Begin(D3DXSPRITE_ALPHABLEND);
-
         g_sprite->Draw(g_bg_texture, &background_rect, nullptr, &background_position, 0xFFFFFFFF);
-
         g_sprite->End();
     }
-
 
     for (int index = first_index; index <= last_index; ++index) {
         if (index < 0 || index >= static_cast<int>(g_chat_buffer.messages.size())) {
             continue;
         }
-
         const float y =
             static_cast<float>(g_config.chat.y) + index * static_cast<float>(g_config.chat.line_height) - scroll_px;
-
         if (y + g_config.chat.line_height <= g_config.chat.y) {
             continue;
         }
-
         if (y >= g_config.chat.y + g_config.chat.height) {
             continue;
         }
 
         const ChatMessage& message = g_chat_buffer.messages[index];
-
         float x = static_cast<float>(g_config.chat.x);
 
         if (!message.timestamp.empty()) {
@@ -158,17 +142,14 @@ void RenderChat(IDirect3DDevice9* device) {
             timestamp_rect.top = static_cast<LONG>(y);
             timestamp_rect.right = g_config.chat.x + g_config.chat.width;
             timestamp_rect.bottom = static_cast<LONG>(y + g_config.chat.line_height);
-
             g_font->DrawTextW(nullptr, message.timestamp.c_str(), -1, &timestamp_rect, DT_LEFT | DT_NOCLIP,
                               g_config.timestamps.color);
-
             RECT measured_timestamp{};
             g_font->DrawTextW(nullptr, message.timestamp.c_str(), -1, &measured_timestamp, DT_CALCRECT | DT_NOCLIP,
                               g_config.timestamps.color);
 
             x += static_cast<float>(measured_timestamp.right - measured_timestamp.left);
-
-            x += 6.0f; 
+            x += 6.0f;
         }
 
         for (const TextSegment& segment : message.segments) {
@@ -184,9 +165,7 @@ void RenderChat(IDirect3DDevice9* device) {
 
             RECT measured{};
             g_font->DrawTextW(nullptr, segment.text.c_str(), -1, &measured, DT_CALCRECT | DT_NOCLIP, segment.color);
-
             const int segment_width = measured.right - measured.left;
-
             const int drawn =
                 g_font->DrawTextW(nullptr, segment.text.c_str(), -1, &text_rect, DT_LEFT | DT_NOCLIP, segment.color);
 

@@ -78,14 +78,12 @@ auto WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved) -> BOOL {
     switch (reason) {
     case DLL_PROCESS_ATTACH: {
         DisableThreadLibraryCalls(instance);
-
         if (!ConsoleManager::get_instance().create_console()) {
             return FALSE;
         }
 
         Logger::Init();
 
-        // ���� � config.json ����� � .asi.
         char module_path[MAX_PATH]{};
         GetModuleFileNameA(instance, module_path, MAX_PATH);
 
@@ -95,7 +93,6 @@ auto WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved) -> BOOL {
             config_path = config_path.substr(0, last_slash + 1);
         }
         config_path += "smooth_chat_config.json";
-
         LoadConfig(config_path);
 
         Logger::Info("SAMPChatRebuild loading");
@@ -106,20 +103,17 @@ auto WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved) -> BOOL {
         }
 
         const HMODULE samp_module = GetModuleHandleW(L"samp.dll");
-
         if (!samp_module) {
             Logger::Error("samp.dll not found");
             return FALSE;
         }
 
         g_samp_base = reinterpret_cast<uintptr_t>(samp_module);
-
         Logger::Pointer("samp.dll base", g_samp_base);
 
         InitializeAddresses();
 
         const uintptr_t thread = _beginthreadex(nullptr, 0, &InitializationThread, nullptr, 0, nullptr);
-
         if (thread) {
             CloseHandle(reinterpret_cast<HANDLE>(thread));
         } else {

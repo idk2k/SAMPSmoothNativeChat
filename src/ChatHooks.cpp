@@ -154,31 +154,17 @@ static void __fastcall AddEntryHooked(void* ecx, void* edx, int type, const char
     }
 }
 
-// ---------------------------------------------------------------------------
-// CChat::Render
-// ---------------------------------------------------------------------------
-
 using ChatRender_t = void(__fastcall*)(void* ecx, void* edx);
-
 static ChatRender_t fp_chat_render = nullptr;
-
 static void __fastcall ChatRenderHooked(void* ecx, void* edx) {}
 
-// ---------------------------------------------------------------------------
-// CChat::OnScroll
-// ---------------------------------------------------------------------------
-
 using ChatScroll_t = void(__fastcall*)(void* ecx, void* edx, int delta);
-
 static ChatScroll_t fp_chat_scroll = nullptr;
-
 static void __fastcall ChatScrollHooked(void* ecx, void* edx, int delta) {
     if (delta == 0) {
         return;
     }
-
     const float direction = (delta > 0) ? -1.0f : 1.0f;
-
     g_scroll.AddTarget(direction * g_config.scroll.lines_per_click * static_cast<float>(g_config.chat.line_height));
 }
 
@@ -187,14 +173,12 @@ static bool CreateAndEnableHook(const char* name, uintptr_t target, void* detour
     Logger::Pointer(name, target);
 
     MH_STATUS status = MH_CreateHook(reinterpret_cast<LPVOID>(target), detour, original);
-
     if (status != MH_OK) {
         Logger::Error(std::string(name) + ": MH_CreateHook failed, status=" + std::to_string(static_cast<int>(status)));
         return false;
     }
 
     status = MH_EnableHook(reinterpret_cast<LPVOID>(target));
-
     if (status != MH_OK) {
         Logger::Error(std::string(name) + ": MH_EnableHook failed, status=" + std::to_string(static_cast<int>(status)));
         return false;

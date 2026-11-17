@@ -35,6 +35,7 @@ extern ChatBuffer g_chat_buffer;
 extern ScrollPhysics g_scroll;
 
 extern bool g_menu_open;
+extern bool g_cursor_shown;
 
 class FrameClock {
 public:

@@ -113,6 +113,26 @@ void DrawTextOutlined(const wchar_t* text, RECT rect, D3DCOLOR text_color, int o
     g_font->DrawTextW(nullptr, text, -1, &rect, DT_LEFT | DT_NOCLIP, text_color);
 }
 
+int MeasureTextWidth(const std::wstring& text, D3DCOLOR color) {
+    if (text.empty()) {
+        return 0;
+    }
+
+    const wchar_t sentinel = L'W';
+    std::wstring text_with_sentinel = text + sentinel;
+
+    RECT with_sentinel{};
+    g_font->DrawTextW(nullptr, text_with_sentinel.c_str(), -1, &with_sentinel, DT_CALCRECT | DT_NOCLIP, color);
+
+    RECT sentinel_rect{};
+    g_font->DrawTextW(nullptr, &sentinel, 1, &sentinel_rect, DT_CALCRECT | DT_NOCLIP, color);
+
+    const int width_with_sentinel = with_sentinel.right - with_sentinel.left;
+    const int sentinel_width = sentinel_rect.right - sentinel_rect.left;
+
+    return std::max(0, width_with_sentinel - sentinel_width);
+}
+
 void RenderChat(IDirect3DDevice9* device) {
     if (!device || !g_graphics_ready || g_chat_buffer.messages.empty()) {
         return;
@@ -170,11 +190,8 @@ void RenderChat(IDirect3DDevice9* device) {
             timestamp_rect.right = g_config.chat.x + g_config.chat.width;
             timestamp_rect.bottom = static_cast<LONG>(y + g_config.chat.line_height);
             DrawTextOutlined(message.timestamp.c_str(), timestamp_rect, g_config.timestamps.color);
-            RECT measured_timestamp{};
-            g_font->DrawTextW(nullptr, message.timestamp.c_str(), -1, &measured_timestamp, DT_CALCRECT | DT_NOCLIP,
-                              g_config.timestamps.color);
-
-            x += static_cast<float>(measured_timestamp.right - measured_timestamp.left);
+            const int timestamp_width = MeasureTextWidth(message.timestamp, g_config.timestamps.color);
+            x += static_cast<float>(timestamp_width);
             x += 6.0f;
         }
 
@@ -189,9 +206,7 @@ void RenderChat(IDirect3DDevice9* device) {
             text_rect.right = g_config.chat.x + g_config.chat.width;
             text_rect.bottom = static_cast<LONG>(y + g_config.chat.line_height);
 
-            RECT measured{};
-            g_font->DrawTextW(nullptr, segment.text.c_str(), -1, &measured, DT_CALCRECT | DT_NOCLIP, segment.color);
-            const int segment_width = measured.right - measured.left;
+            const int segment_width = MeasureTextWidth(segment.text, segment.color);
             DrawTextOutlined(segment.text.c_str(), text_rect, segment.color);
 
             x += static_cast<float>(segment_width);

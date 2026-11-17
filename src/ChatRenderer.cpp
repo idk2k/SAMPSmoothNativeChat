@@ -86,6 +86,33 @@ void ReleaseGraphics() {
     g_graphics_ready = false;
 }
 
+void DrawTextOutlined(const wchar_t* text, RECT rect, D3DCOLOR text_color, int outline_size = 1) {
+    const D3DCOLOR outline_color = 0xFF000000;
+
+    RECT outline_rect = rect;
+
+    outline_rect.left += outline_size;
+    outline_rect.right += outline_size;
+    g_font->DrawTextW(nullptr, text, -1, &outline_rect, DT_LEFT | DT_NOCLIP, outline_color);
+
+    outline_rect = rect;
+    outline_rect.left -= outline_size;
+    outline_rect.right -= outline_size;
+    g_font->DrawTextW(nullptr, text, -1, &outline_rect, DT_LEFT | DT_NOCLIP, outline_color);
+
+    outline_rect = rect;
+    outline_rect.top += outline_size;
+    outline_rect.bottom += outline_size;
+    g_font->DrawTextW(nullptr, text, -1, &outline_rect, DT_LEFT | DT_NOCLIP, outline_color);
+
+    outline_rect = rect;
+    outline_rect.top -= outline_size;
+    outline_rect.bottom -= outline_size;
+    g_font->DrawTextW(nullptr, text, -1, &outline_rect, DT_LEFT | DT_NOCLIP, outline_color);
+
+    g_font->DrawTextW(nullptr, text, -1, &rect, DT_LEFT | DT_NOCLIP, text_color);
+}
+
 void RenderChat(IDirect3DDevice9* device) {
     if (!device || !g_graphics_ready || g_chat_buffer.messages.empty()) {
         return;
@@ -142,8 +169,7 @@ void RenderChat(IDirect3DDevice9* device) {
             timestamp_rect.top = static_cast<LONG>(y);
             timestamp_rect.right = g_config.chat.x + g_config.chat.width;
             timestamp_rect.bottom = static_cast<LONG>(y + g_config.chat.line_height);
-            g_font->DrawTextW(nullptr, message.timestamp.c_str(), -1, &timestamp_rect, DT_LEFT | DT_NOCLIP,
-                              g_config.timestamps.color);
+            DrawTextOutlined(message.timestamp.c_str(), timestamp_rect, g_config.timestamps.color);
             RECT measured_timestamp{};
             g_font->DrawTextW(nullptr, message.timestamp.c_str(), -1, &measured_timestamp, DT_CALCRECT | DT_NOCLIP,
                               g_config.timestamps.color);
@@ -166,8 +192,7 @@ void RenderChat(IDirect3DDevice9* device) {
             RECT measured{};
             g_font->DrawTextW(nullptr, segment.text.c_str(), -1, &measured, DT_CALCRECT | DT_NOCLIP, segment.color);
             const int segment_width = measured.right - measured.left;
-            const int drawn =
-                g_font->DrawTextW(nullptr, segment.text.c_str(), -1, &text_rect, DT_LEFT | DT_NOCLIP, segment.color);
+            DrawTextOutlined(segment.text.c_str(), text_rect, segment.color);
 
             x += static_cast<float>(segment_width);
         }

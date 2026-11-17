@@ -33,16 +33,10 @@ public:
         const ULONGLONG now = GetTickCount64();
         const int native_pos = ReadNativePosition();
 
-        // -------------------------------------------------------------
-        // Позиция изменилась.
-        // -------------------------------------------------------------
         if (native_pos != last_native_pos_) {
             if (native_pos == expected_native_pos_) {
-                // Это движение от нашей же команды Scroll —
-                // НЕ внешнего драга. Ничего не делаем.
             }
             else if (native_max_ > 0 && on_external_scroll) {
-                // Реальный драг ползунка мышью.
                 external_until_ = now + 250;
 
                 const float fraction =
@@ -52,9 +46,6 @@ public:
                 on_external_scroll(fraction);
             }
         }
-        // -------------------------------------------------------------
-        // Корректирующая синхронизация от физики.
-        // -------------------------------------------------------------
         else if (max_line_ > 0 &&
             native_max_ > 0 &&
             now >= external_until_)
@@ -71,8 +62,6 @@ public:
             if (delta != 0) {
                 scroll_(scrollbar_, delta);
 
-                // Запоминаем, куда должна приехать позиция после
-                // нашей команды, чтобы не принять это за драг мышью.
                 expected_native_pos_ = desired;
             }
         }
@@ -112,9 +101,7 @@ private:
     int native_max_ = 0;
     int last_native_pos_ = 0;
 
-    // Ожидаемая позиция после нашей собственной Scroll-команды.
     int expected_native_pos_ = -1;
 
-    // До этого времени физика не корректирует ползунок.
     ULONGLONG external_until_ = 0;
 };

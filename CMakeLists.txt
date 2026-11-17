@@ -54,8 +54,10 @@ else()
 endif()
 
 # github actions path hot-fix (becase actions uses nuget d3d9 package)
-if(NOT DXSDK_DIR)
-    set(DXSDK_DIR "$ENV{DXSDK_DIR}")
+if(NOT DXSDK_DIR AND DEFINED ENV{DXSDK_DIR})
+    file(TO_CMAKE_PATH "$ENV{DXSDK_DIR}" DXSDK_DIR)
+elseif(DXSDK_DIR)
+    file(TO_CMAKE_PATH "${DXSDK_DIR}" DXSDK_DIR)
 endif()
 
 # Source files list
@@ -72,7 +74,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/third-party
-    "$ENV{DXSDK_DIR}/Include"
+    "${DXSDK_DIR}/Include"
 )
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE

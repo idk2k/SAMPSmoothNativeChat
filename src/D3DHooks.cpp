@@ -32,7 +32,6 @@ static HRESULT __stdcall EndSceneHooked(IDirect3DDevice9* device) {
         CreateGraphics(device);
     }
 
-    // ����������� ������������� ImGui.
     if (!g_imgui_ready) {
         menu::Init(device);
         InstallWndProcHook();
@@ -44,19 +43,16 @@ static HRESULT __stdcall EndSceneHooked(IDirect3DDevice9* device) {
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 
-    // � ������ Present, ����� ImGui::NewFrame():
     if (g_menu_open) {
         if (!g_cursor_shown) {
             g_cursor_shown = true;
             ToggleCursor(true);
         }
-        // ... ��������� ���� ...
     } else if (g_cursor_shown) {
         g_cursor_shown = false;
         ToggleCursor(false);
     }
 
-    // --- ��� ��� (��� ����) ---
     RECT clip;
     clip.left = g_config.chat.x;
     clip.top = g_config.chat.y;
@@ -74,7 +70,6 @@ static HRESULT __stdcall EndSceneHooked(IDirect3DDevice9* device) {
 
     device->SetRenderState(D3DRS_SCISSORTESTENABLE, old_scissor);
 
-    // --- ���� ImGui (������ ����) ---
     menu::Render(device);
 
     ImGui::EndFrame();
@@ -108,10 +103,6 @@ static HRESULT __stdcall ResetHooked(IDirect3DDevice9* device, D3DPRESENT_PARAME
 
     return result;
 }
-
-// ---------------------------------------------------------------------------
-// ��������� D3D-�����.
-// ---------------------------------------------------------------------------
 
 static bool CreateAndEnableHook(const char* name, void* target, void* detour, void** original) {
     Logger::Pointer(name, reinterpret_cast<uintptr_t>(target));
@@ -149,13 +140,11 @@ bool InstallD3DHooks() {
         return false;
     }
 
-    // EndScene � vtable index 42.
     if (!CreateAndEnableHook("IDirect3DDevice9::EndScene", vtable[42], &EndSceneHooked,
                              reinterpret_cast<void**>(&fp_end_scene))) {
         return false;
     }
 
-    // Reset � vtable index 16.
     CreateAndEnableHook("IDirect3DDevice9::Reset", vtable[16], &ResetHooked, reinterpret_cast<void**>(&fp_reset));
 
     return true;

@@ -10,9 +10,6 @@ static constexpr uintptr_t kGamePtrOffset = 0x26EBAC;
 static constexpr uintptr_t kSetCursorMode = 0xA06F0;
 static constexpr uintptr_t kUnlockActorCam = 0xA05D0;
 
-// ������ ������������� ������� SA-MP.
-// state = true  -> ��������� ����� (������ �� �������� �����)
-// state = false -> ������� ����� (������ ����������� �����)
 void ToggleCursor(bool state) {
     void* game = *reinterpret_cast<void**>(g_samp_base + kGamePtrOffset);
 
@@ -37,7 +34,6 @@ extern bool g_menu_open;
 bool g_cursor_shown;
 
 static LRESULT __stdcall HookedWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-    // ���� ���� ������� � ���� ������ ������ � ImGui.
     if (g_menu_open) {
         ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
         return TRUE;
@@ -48,7 +44,6 @@ static LRESULT __stdcall HookedWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARA
         return true;
     }
 
-    // ���� ������� � SA-MP ��� ��������� �������� � �������.
     return CallWindowProcA(g_original_wndproc, hWnd, msg, wParam, lParam);
 }
 

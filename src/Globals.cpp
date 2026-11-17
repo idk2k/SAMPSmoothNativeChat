@@ -51,7 +51,6 @@ void* GetChatInfo() {
         return nullptr;
     }
 
-    // 0x26EB80 Ч указатель на CChatInfo*.
     return *reinterpret_cast<void**>(g_addresses.chat_info);
 }
 
@@ -71,14 +70,12 @@ void RecalculateScrollBounds() {
 }
 
 bool IsChatInputOpen() {
-    // RefInputBox: samp.dll + 0x26EB84 хранит CInput*.
     const uintptr_t input_box_ptr = *reinterpret_cast<uintptr_t*>(g_samp_base + 0x26EB84);
 
     if (!input_box_ptr) {
         return false;
     }
 
-    // CInput::m_bEnabled Ч BOOL по смещению 0x14E0.
     const BOOL enabled = *reinterpret_cast<BOOL*>(input_box_ptr + 0x14E0);
 
     return enabled != FALSE;
@@ -87,5 +84,4 @@ bool IsChatInputOpen() {
 NullScrollbarView g_null_scrollbar;
 NativeDxutScrollbarView g_native_scrollbar;
 
-// ѕока скроллбар не прив€зан Ч используем заглушку.
 IScrollbarView* g_scrollbar = &g_null_scrollbar;

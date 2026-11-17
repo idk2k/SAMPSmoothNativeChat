@@ -11,8 +11,6 @@
 
 static bool g_scrollbar_bound = false;
 
-// �������� ��������� DXUT-����������.
-// ���������� ���� ��� � ��� ������ ��������� � ����.
 static void EnsureScrollbarBound() {
     if (g_scrollbar_bound) {
         return;
@@ -24,7 +22,6 @@ static void EnsureScrollbarBound() {
         return;
     }
 
-    // CChat::m_pScrollbar � �������� 0x11E � ���� ������ R5.
     void* scrollbar = *reinterpret_cast<void**>(reinterpret_cast<uintptr_t>(chat) + 0x11E);
 
     if (!scrollbar) {
@@ -33,30 +30,20 @@ static void EnsureScrollbarBound() {
 
     g_native_scrollbar.SetScrollbar(scrollbar);
 
-    // CDXUTScrollBar::Scroll � samp.dll + 0x887B0.
     g_native_scrollbar.SetScrollFunction(g_samp_base + 0x887B0);
 
-    // ���� �������� ����� -> ��� ������� �� ��� 1:1.
     g_native_scrollbar.on_external_scroll = [](float fraction) {
         g_scroll.SetTargetFraction(fraction);
         g_scroll.SnapToTarget();
     };
 
-    // ���������� ��������� ��������� ����������.
     g_native_scrollbar.Calibrate();
-
-    // ����������� �������� ������ � �������� �� ��������.
     g_scrollbar = &g_native_scrollbar;
 
     g_scrollbar_bound = true;
 
     Logger::Ok("Native DXUT scrollbar bound and calibrated");
 }
-
-// ---------------------------------------------------------------------------
-// ������ SA-MP 0.3.7 R5.
-// ��� ������ �������������: final = samp.dll base + offset.
-// ---------------------------------------------------------------------------
 
 namespace offsets {
 constexpr uintptr_t kChatInfo = 0x26EB80;
@@ -67,12 +54,6 @@ constexpr uintptr_t kChatRecalcFontSize = 0x67120;
 constexpr uintptr_t kChatRender = 0x67940;
 constexpr uintptr_t kChatMoveScrollbar = 0x887B0;
 } // namespace offsets
-
-// ---------------------------------------------------------------------------
-// CChat::AddEntry
-// void CChat::AddEntry(int, const char*, const char*, D3DCOLOR, D3DCOLOR)
-// thiscall: ecx = this, edx = ������ �������.
-// ---------------------------------------------------------------------------
 
 using AddEntry_t = void(__fastcall*)(void* ecx, void* edx, int type, const char* text, const char* prefix,
                                      D3DCOLOR text_color, D3DCOLOR prefix_color);
@@ -93,8 +74,6 @@ static std::wstring ToWideCp1251(const char* text) {
     std::wstring wide(static_cast<size_t>(size), L'\0');
     MultiByteToWideChar(1251, 0, text, -1, &wide[0], size);
 
-    // ������� ����������� '\0', ������� MultiByteToWideChar
-    // �������� � ������������ ������ ��� cbMultiByte = -1.
     if (!wide.empty() && wide.back() == L'\0') {
         wide.pop_back();
     }
@@ -102,7 +81,6 @@ static std::wstring ToWideCp1251(const char* text) {
     return wide;
 }
 
-// ����������� UTF-16 -> UTF-8 ��� ����������� ����.
 static std::string ToUtf8Log(const std::wstring& wide) {
     if (wide.empty()) {
         return "";
@@ -124,7 +102,6 @@ static std::string ToUtf8Log(const std::wstring& wide) {
 
 static void __fastcall AddEntryHooked(void* ecx, void* edx, int type, const char* text, const char* prefix,
                                       D3DCOLOR text_color, D3DCOLOR prefix_color) {
-    // �������� ����� ���������� ���������.
     if (fp_add_entry) {
         fp_add_entry(ecx, edx, type, text, prefix, text_color, prefix_color);
     }
@@ -148,10 +125,8 @@ static void __fastcall AddEntryHooked(void* ecx, void* edx, int type, const char
         text_color |= 0xFF000000;
     }
 
-    // ����������, ��� �� ������������ ����� ������� �� ���������� ���������.
     const bool was_at_bottom = g_scroll.position >= g_scroll.max_position - 0.5f;
 
-    // ������� ����� ��� ����������.
     SYSTEMTIME st{};
     GetLocalTime(&st);
 
@@ -168,8 +143,6 @@ static void __fastcall AddEntryHooked(void* ecx, void* edx, int type, const char
                      ToUtf8Log(wide_prefix) + "'" + ", text='" + ToUtf8Log(wide_text) + "'");
     }
 
-    // ����������� ��������� ��� ������ ���������,
-    // ����� �� ��� ����� ����� � �����.
     if (g_chat_buffer.messages.size() > 10) {
         EnsureScrollbarBound();
     }
@@ -177,25 +150,19 @@ static void __fastcall AddEntryHooked(void* ecx, void* edx, int type, const char
     RecalculateScrollBounds();
 
     if (was_at_bottom) {
-        // ������������ ��� ����� � ������� �����,
-        // ����� ��������� ����� �����.
         g_scroll.SnapToBottom();
     }
 }
 
 // ---------------------------------------------------------------------------
 // CChat::Render
-// ��������� ��������� �������� ������ ����.
 // ---------------------------------------------------------------------------
 
 using ChatRender_t = void(__fastcall*)(void* ecx, void* edx);
 
 static ChatRender_t fp_chat_render = nullptr;
 
-static void __fastcall ChatRenderHooked(void* ecx, void* edx) {
-    // �������� �� ����������.
-    // �������� ��� �� ��������: �� ���, �� ������, �� ���������.
-}
+static void __fastcall ChatRenderHooked(void* ecx, void* edx) {}
 
 // ---------------------------------------------------------------------------
 // CChat::OnScroll
@@ -210,19 +177,10 @@ static void __fastcall ChatScrollHooked(void* ecx, void* edx, int delta) {
         return;
     }
 
-    // ������ �����: delta > 0 � ���������� ����� ������ ���������.
     const float direction = (delta > 0) ? -1.0f : 1.0f;
 
     g_scroll.AddTarget(direction * g_config.scroll.lines_per_click * static_cast<float>(g_config.chat.line_height));
-
-    // �������� ��������� �� ��������.
-    // ���� ����� �������� ������� �������� ���������:
-    // fp_chat_scroll(ecx, edx, delta);
 }
-
-// ---------------------------------------------------------------------------
-// ��������� �����.
-// ---------------------------------------------------------------------------
 
 static bool CreateAndEnableHook(const char* name, uintptr_t target, void* detour, void** original) {
     Logger::Hook(std::string("Target: ") + name);
@@ -263,14 +221,9 @@ void InstallChatHooks() {
 
 void ShutdownChatHooks() {
     MH_DisableHook(reinterpret_cast<LPVOID>(ToAbsolute(offsets::kChatAddEntry)));
-
     MH_DisableHook(reinterpret_cast<LPVOID>(ToAbsolute(offsets::kChatRender)));
-
     MH_DisableHook(reinterpret_cast<LPVOID>(ToAbsolute(offsets::kChatScroll)));
-
     MH_RemoveHook(reinterpret_cast<LPVOID>(ToAbsolute(offsets::kChatAddEntry)));
-
     MH_RemoveHook(reinterpret_cast<LPVOID>(ToAbsolute(offsets::kChatRender)));
-
     MH_RemoveHook(reinterpret_cast<LPVOID>(ToAbsolute(offsets::kChatScroll)));
 }

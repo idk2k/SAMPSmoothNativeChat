@@ -12,21 +12,6 @@
 #include <iostream>
 #include <cstdint>
 
-// ---------------------------------------------------------------------------
-// ������� ������ ��� ������� Windows.
-//
-// ������:
-//   TRACE  � �����, ����������� ���������
-//   DEBUG  � �������, ���������� ����������
-//   INFO   � �����, ������� �������
-//   OK     � ������, �������� ��������
-//   WARN   � �����, ��������������
-//   ERROR  � �������, ������
-//   HOOK   � ���������, ���������/������ �����
-//   D3D    � �������, DirectX-�������
-//   SAMP   � �����, ������� SA-MP
-// ---------------------------------------------------------------------------
-
 class Logger {
 public:
     enum class Level {
@@ -42,7 +27,6 @@ public:
     };
 
     static void Init() {
-        // �������� ANSI escape-������������������ � �������.
         HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
 
         DWORD mode = 0;
@@ -51,7 +35,6 @@ public:
                 mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
         }
 
-        // �������� UTF-8 ����� (��� ��������� � �������).
         SetConsoleOutputCP(CP_UTF8);
         SetConsoleCP(CP_UTF8);
     }
@@ -66,7 +49,6 @@ public:
     static void D3D(const std::string& text) { Write(Level::D3D, text); }
     static void SAMP(const std::string& text) { Write(Level::SAMP, text); }
 
-    // ��������� � hex.
     static void Pointer(const std::string& name, uintptr_t value) {
         std::ostringstream stream;
         stream << name << " = 0x"
@@ -74,7 +56,6 @@ public:
         Info(stream.str());
     }
 
-    // HRESULT-���������.
     static void HResult(const std::string& name, HRESULT result) {
         if (SUCCEEDED(result)) {
             Ok(name + " succeeded (0x" + ToHex(static_cast<uint32_t>(result)) + ")");
@@ -84,7 +65,6 @@ public:
         }
     }
 
-    // MH_STATUS-���������.
     static void MhStatus(const std::string& name, int status) {
         if (status == 0) { // MH_OK
             Ok(name + " succeeded (MH_OK)");
@@ -94,7 +74,6 @@ public:
         }
     }
 
-    // Hex-���� ������ (��� ������� ������/��������).
     static void HexDump(const std::string& name,
         const void* data,
         size_t size)
@@ -142,15 +121,15 @@ private:
 
     static const char* LevelColor(Level level) {
         switch (level) {
-        case Level::Trace: return "\x1B[90m"; // �����
-        case Level::Debug: return "\x1B[96m"; // �������
-        case Level::Info:  return "\x1B[97m"; // �����
-        case Level::Ok:    return "\x1B[92m"; // ������
-        case Level::Warn:  return "\x1B[93m"; // �����
-        case Level::Error: return "\x1B[91m"; // �������
-        case Level::Hook:  return "\x1B[95m"; // ���������
-        case Level::D3D:   return "\x1B[94m"; // �����
-        case Level::SAMP:  return "\x1B[93m"; // �����
+        case Level::Trace: return "\x1B[90m";
+        case Level::Debug: return "\x1B[96m";
+        case Level::Info:  return "\x1B[97m";
+        case Level::Ok:    return "\x1B[92m";
+        case Level::Warn:  return "\x1B[93m";
+        case Level::Error: return "\x1B[91m";
+        case Level::Hook:  return "\x1B[95m";
+        case Level::D3D:   return "\x1B[94m";
+        case Level::SAMP:  return "\x1B[93m"; 
         }
         return "\x1B[97m";
     }

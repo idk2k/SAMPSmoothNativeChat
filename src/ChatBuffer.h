@@ -1,4 +1,5 @@
 #pragma once
+
 #include "ChatTextParser.h"
 #include <d3d9.h>
 #include <deque>
@@ -8,7 +9,7 @@
 struct ChatMessage {
     std::vector<TextSegment> segments;
     D3DCOLOR base_color = 0xFFFFFFFF;
-    std::wstring timestamp; // например "[12:34]"
+    std::wstring timestamp;
 };
 
 class ChatBuffer {

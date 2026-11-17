@@ -8,7 +8,6 @@ using json = nlohmann::json;
 
 Config g_config;
 
-// Парсит "#RRGGBB" или "AARRGGBB" в D3DCOLOR.
 static D3DCOLOR ParseColor(const std::string& hex, D3DCOLOR fallback) {
     if (hex.size() != 7 && hex.size() != 9)
         return fallback;

@@ -19,12 +19,10 @@ void menu::Init(IDirect3DDevice9* device) {
 
     ImGui::CreateContext();
 
-    // HWND ���� ����.
     HWND game_window = **reinterpret_cast<HWND**>(0xC17054);
     ImGui_ImplWin32_Init(game_window);
     ImGui_ImplDX9_Init(device);
 
-    // ����� � ���������� ���������.
     char windows_dir[MAX_PATH]{};
     GetEnvironmentVariableA("WINDIR", windows_dir, MAX_PATH);
 
@@ -65,7 +63,6 @@ void menu::Render(IDirect3DDevice9* device) {
             }
 
             if (graphics_changed && device) {
-                // ���������� ������� �������� ��� ����� ������.
                 ReleaseGraphics();
                 CreateGraphics(device);
                 Logger::D3D("Graphics recreated (size changed)");
@@ -82,7 +79,6 @@ void menu::Render(IDirect3DDevice9* device) {
 
             ImGui::SliderFloat("Friction", &g_config.scroll.friction, 5.0f, 80.0f, "%.0f");
 
-            // �������������� ������ � ��������.
             g_scroll.stiffness = g_config.scroll.stiffness;
             g_scroll.friction = g_config.scroll.friction;
         }
@@ -96,9 +92,6 @@ void menu::Render(IDirect3DDevice9* device) {
             ImGui::Text("Scroll target: %.1f", g_scroll.target);
         }
 
-        // -------------------------------------------------------------
-        // ������ ���� � ������� ����������
-        // -------------------------------------------------------------
         ImGui::Spacing();
         ImGui::Separator();
         ImGui::Spacing();

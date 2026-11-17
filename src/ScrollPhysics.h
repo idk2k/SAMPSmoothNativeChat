@@ -44,15 +44,11 @@ public:
         velocity = 0.0f;
     }
 
-    // Мгновенно ставит position в target без пружинного движения.
-    // Используется при прямом драге ползунка мышью.
     void SnapToTarget() {
         position = target;
         velocity = 0.0f;
     }
 
-    // Устанавливает цель по доле 0.0..1.0 от всего диапазона.
-    // Используется, когда пользователь тянет нативный ползунок мышью.
     void SetTargetFraction(float fraction) {
         fraction = std::clamp(fraction, 0.0f, 1.0f);
         target = min_position + (max_position - min_position) * fraction;

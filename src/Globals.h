@@ -55,5 +55,4 @@ void* GetChatInfo();
 void RecalculateScrollBounds();
 
 extern bool g_chat_input_open;
-
 bool IsChatInputOpen();

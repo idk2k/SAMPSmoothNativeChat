@@ -29,6 +29,7 @@ void menu::Init(IDirect3DDevice9* device) {
     std::string font_path = std::string(windows_dir) + "\\Fonts\\Tahoma.TTF";
 
     ImGuiIO& io = ImGui::GetIO();
+    // fix mouse presence at gta startaup
     io.ConfigFlags |= ImGuiConfigFlags_NoMouseCursorChange;
     io.Fonts->AddFontFromFileTTF(font_path.c_str(), 16.0f, nullptr, io.Fonts->GetGlyphRangesCyrillic());
 

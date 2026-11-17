@@ -114,7 +114,7 @@ void RenderChat(IDirect3DDevice9* device) {
 
     D3DXVECTOR3 background_position(static_cast<float>(g_config.chat.x), static_cast<float>(g_config.chat.y), 0.0f);
 
-    if (g_chat_input_open) {
+    if (IsChatInputOpen()) {
         g_sprite->Begin(D3DXSPRITE_ALPHABLEND);
         g_sprite->Draw(g_bg_texture, &background_rect, nullptr, &background_position, 0xFFFFFFFF);
         g_sprite->End();

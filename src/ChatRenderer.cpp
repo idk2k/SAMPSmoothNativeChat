@@ -171,8 +171,12 @@ void RenderChat(IDirect3DDevice9* device) {
         if (index < 0 || index >= static_cast<int>(g_chat_buffer.messages.size())) {
             continue;
         }
+
         const float y =
             static_cast<float>(g_config.chat.y) + index * static_cast<float>(g_config.chat.line_height) - scroll_px;
+
+        const LONG text_y = static_cast<LONG>(std::lround(y));
+
         if (y + g_config.chat.line_height <= g_config.chat.y) {
             continue;
         }
@@ -186,9 +190,9 @@ void RenderChat(IDirect3DDevice9* device) {
         if (!message.timestamp.empty()) {
             RECT timestamp_rect;
             timestamp_rect.left = static_cast<LONG>(x);
-            timestamp_rect.top = static_cast<LONG>(y);
+            timestamp_rect.top = text_y;
             timestamp_rect.right = g_config.chat.x + g_config.chat.width;
-            timestamp_rect.bottom = static_cast<LONG>(y + g_config.chat.line_height);
+            timestamp_rect.bottom = text_y + static_cast<LONG>(g_config.chat.line_height);
             DrawTextOutlined(message.timestamp.c_str(), timestamp_rect, g_config.timestamps.color);
             const int timestamp_width = MeasureTextWidth(message.timestamp, g_config.timestamps.color);
             x += static_cast<float>(timestamp_width);
@@ -202,9 +206,9 @@ void RenderChat(IDirect3DDevice9* device) {
 
             RECT text_rect;
             text_rect.left = static_cast<LONG>(x);
-            text_rect.top = static_cast<LONG>(y);
+            text_rect.top = text_y;
             text_rect.right = g_config.chat.x + g_config.chat.width;
-            text_rect.bottom = static_cast<LONG>(y + g_config.chat.line_height);
+            text_rect.bottom = text_y + static_cast<LONG>(g_config.chat.line_height);
 
             const int segment_width = MeasureTextWidth(segment.text, segment.color);
             DrawTextOutlined(segment.text.c_str(), text_rect, segment.color);
